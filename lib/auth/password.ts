@@ -68,7 +68,12 @@ const ARGON2_OPTIONS: argon2.Options & { raw?: false } = {
  * @returns The PHC-encoded argon2id hash string.
  */
 export async function hashPassword(plaintext: string): Promise<string> {
-  return argon2.hash(plaintext, ARGON2_OPTIONS);
+  try {
+  return await argon2.hash(plaintext, ARGON2_OPTIONS);
+} catch (err) {
+  // Convert any low-level argon2 error into a generic auth-failure error.
+  throw new AuthFailureError('Password hashing failed');
+}
 }
 
 /**
@@ -91,5 +96,18 @@ export async function verifyPassword(
     throw new SsoOnlyUserError();
   }
 
-  return argon2.verify(storedHash, plaintext);
+  try {
+  return await argon2.verify(storedHash, plaintext);
+} catch (err) {
+  // Convert any verification error into a generic authentication failure.
+  throw new AuthFailureError('Password verification failed');
+}
+}
+/** Generic authentication error used to mask internal hashing/verification failures. */
+export class AuthFailureError extends Error {
+  public readonly code = 'AUTH_FAILURE' as const;
+  constructor(message?: string) {
+    super(message ?? 'Authentication failed');
+    this.name = 'AuthFailureError';
+  }
 }

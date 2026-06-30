@@ -11,9 +11,10 @@
  *   queries MUST go through withTenantContext (lib/db/withTenant.ts) so that
  *   variable is always set inside an explicit transaction.
  *
- * • `adminPool` connects as `mis_admin`, which is the table OWNER and therefore
- *   bypasses RLS entirely. This pool is exported separately and must ONLY be
- *   used behind an explicit requirePlatformAdmin() guard
+ * • `_adminPoolInternal` connects as `mis_admin`, which is the table OWNER and therefore
+ *   bypasses RLS entirely. This pool is kept internal and must ONLY be
+ *   accessed via the getAdminPool() accessor which enforces the
+ *   requirePlatformAdmin() guard.
  *   (lib/auth/permissions.ts). Collapsing these into one pool would silently
  *   break tenant isolation for every admin operation.
  *
@@ -100,19 +101,18 @@ function createAppPool(): Pool {
 }
 
 /**
- * adminPool — connects as the `mis_admin` Postgres role.
+ * _adminPoolInternal — connects as the `mis_admin` Postgres role.
  *
  * `mis_admin` is the table OWNER and is NOT subject to RLS — it bypasses all
  * tenant isolation policies. This pool must ONLY be used from code that has
  * called requirePlatformAdmin() (lib/auth/permissions.ts) first.
  *
- * Do NOT import this pool directly in route handlers or Server Actions.
- * The intended pattern:
+ * Do NOT export or import this pool directly in route handlers or Server Actions.
+ * The intended pattern is to use getAdminPool(session) from lib/auth/permissions.ts:
  *
- *   import { adminPool } from "@/lib/db/pool";
- *   import { requirePlatformAdmin } from "@/lib/auth/permissions";
+ *   import { getAdminPool } from "@/lib/auth/permissions";
  *
- *   requirePlatformAdmin(session); // throws ForbiddenError if not admin
+ *   const adminPool = await getAdminPool(session); // internally checks permissions
  *   const client = await adminPool.connect();
  *
  * Connection string: DATABASE_URL_ADMIN (may point to the direct Neon endpoint
@@ -146,9 +146,9 @@ export const appPool: Pool =
   globalThis.__mis_app_pool ?? (globalThis.__mis_app_pool = createAppPool());
 
 /**
- * Singleton admin pool (mis_admin, bypasses RLS).
- * Only reachable from code that explicitly calls requirePlatformAdmin() first.
+ * Internal singleton admin pool (mis_admin, bypasses RLS).
+ * Do not export directly; use getAdminPool(session) from lib/auth/permissions.ts.
  */
-export const adminPool: Pool =
+export const _adminPoolInternal: Pool =
   globalThis.__mis_admin_pool ??
   (globalThis.__mis_admin_pool = createAdminPool());

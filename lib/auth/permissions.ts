@@ -29,6 +29,8 @@
  */
 
 import { withTenantContext } from "@/lib/db/withTenant";
+import { _adminPoolInternal } from "@/lib/db/pool";
+import type { Pool } from "pg";
 import type { SessionPayload } from "./session";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -249,4 +251,17 @@ export function requirePlatformAdmin(_session: SessionPayload): void {
       "The schema does not include a platform-admin mechanism. " +
       "See requirePlatformAdmin() in lib/auth/permissions.ts."
   );
+}
+
+/**
+ * Safely accesses the admin connection pool.
+ * Internally runs requirePlatformAdmin(session) to ensure the caller has
+ * permission before returning the RLS-bypassing pool.
+ *
+ * @param session - The verified session payload.
+ * @returns The admin Pool instance.
+ */
+export async function getAdminPool(session: SessionPayload): Promise<Pool> {
+  requirePlatformAdmin(session);
+  return _adminPoolInternal;
 }

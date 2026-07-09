@@ -286,15 +286,15 @@ export async function listReportDefinitions(
   const perms = await getEffectivePermissions(session.tenantId, session.userId);
 
   return withTenantContext(session.tenantId, async (client) => {
-    let query = \`SELECT * FROM report_definitions WHERE tenant_id = $1 AND is_active = TRUE\`;
+    let query = `SELECT * FROM report_definitions WHERE tenant_id = $1 AND is_active = TRUE`;
     const params: unknown[] = [session.tenantId];
 
     if (entityTypeId) {
-      query += \` AND entity_type_id = $2\`;
+      query += ` AND entity_type_id = $2`;
       params.push(entityTypeId);
     }
 
-    query += \` ORDER BY created_at DESC\`;
+    query += ` ORDER BY created_at DESC`;
 
     const { rows } = await client.query<ReportDefinitionRow>(query, params);
 

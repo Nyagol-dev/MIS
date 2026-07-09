@@ -22,6 +22,7 @@ import { executeInternalNotification } from './internal-notification';
 import { executeFieldUpdate }          from './field-update';
 import { executeCreateRecord }         from './create-record';
 import { executeSendEmailTemplate }    from './send-email-template';
+import { executeInvalidateReportCache } from './invalidate-cache';
 
 // ── Registry map ─────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ const EXECUTOR_MAP: Readonly<Record<string, ActionExecutor>> = {
   field_update:          executeFieldUpdate,
   create_record:         executeCreateRecord,
   send_email_template:   executeSendEmailTemplate,
+  invalidate_report_cache: executeInvalidateReportCache,
 } as const;
 
 /**

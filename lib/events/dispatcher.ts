@@ -29,7 +29,13 @@ export async function dispatchEntityEvent(client: PoolClient, event: MutationEve
   );
 
   // c. For each subscription, call matchesEventFilter(subscription.event_filter, event) — skip if false.
-  // d. For each passing subscription, INSERT one row into event_execution_log
+  // d. For each passing subscription, INSERT one row into event_execution_log.
+  //
+  // NOTE: request_payload stores the full MutationEvent as JSON so that
+  // the processor (lib/events/processor.ts) can reconstruct the event at
+  // execution time without re-querying the source of the mutation.  This
+  // column MUST be populated here — the processor will mark rows with a
+  // NULL request_payload as permanently failed.
   for (const sub of subsResult.rows) {
     if (matchesEventFilter(sub.event_filter, event)) {
       await client.query(
@@ -40,14 +46,16 @@ export async function dispatchEntityEvent(client: PoolClient, event: MutationEve
           trigger_entity_type,
           trigger_entity_id,
           status,
-          attempt
-        ) VALUES ($1, $2, $3, $4, $5, 'pending', 1)`,
+          attempt,
+          request_payload
+        ) VALUES ($1, $2, $3, $4, $5, 'pending', 1, $6::jsonb)`,
         [
           event.tenantId,
           sub.id,
           event.event,
           event.entityTypeId,
-          event.entityId
+          event.entityId,
+          JSON.stringify(event),
         ]
       );
     }

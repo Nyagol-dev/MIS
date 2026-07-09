@@ -152,3 +152,17 @@ export const appPool: Pool =
 export const _adminPoolInternal: Pool =
   globalThis.__mis_admin_pool ??
   (globalThis.__mis_admin_pool = createAdminPool());
+
+/**
+ * FOR CRON AND INTERNAL SYSTEM USE ONLY. Never call from user-facing handlers —
+ * use getAdminPool(session) instead. Protected at the call site by CRON_SECRET,
+ * not by auth middleware.
+ *
+ * Returns the internal mis_admin pool directly, with NO session check. This
+ * bypasses RLS entirely and is suitable only for cron jobs and cross-tenant
+ * system operations that are authorised by a shared secret (CRON_SECRET) at
+ * the HTTP layer, never by a user session.
+ */
+export function getSystemAdminPool(): Pool {
+  return _adminPoolInternal;
+}

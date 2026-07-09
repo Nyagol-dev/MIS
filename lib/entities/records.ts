@@ -38,6 +38,8 @@ import {
 } from "@/lib/auth/permissions";
 import type { SessionPayload } from "@/lib/auth/session";
 import { getEffectivePermissions } from "@/lib/auth/permissions";
+import { dispatchEntityEvent } from "@/lib/events/dispatcher";
+import { computeChangedFields } from "@/lib/events/utils";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -527,6 +529,21 @@ export async function createEntityRecord(
       context: { schema_version: currentVersion },
     });
 
+    await dispatchEntityEvent(client, {
+      tenantId: session.tenantId,
+      sourceType: "custom_entity",
+      sourceTarget: "", // resolved inside dispatcher from entityTypeId
+      event: "created",
+      entityTypeId,
+      entityId: record.id,
+      actorId: session.userId,
+      oldData: null,
+      newData: record.data,
+      changedFields: [],
+      schemaVersion: record.schema_version,
+      timestamp: new Date().toISOString(),
+    });
+
     return record;
   });
 }
@@ -687,6 +704,35 @@ export async function updateEntityRecord(
       context: { schema_version: pinnedVersion },
     });
 
+    const changedFields = computeChangedFields(
+      existing.data as Record<string, unknown>,
+      updated.data
+    );
+
+    const baseEvent = {
+      tenantId: session.tenantId,
+      sourceType: "custom_entity" as const,
+      sourceTarget: "", // resolved inside dispatcher from entityTypeId
+      entityTypeId,
+      entityId: recordId,
+      actorId: session.userId,
+      oldData: existing.data as Record<string, unknown>,
+      newData: updated.data,
+      changedFields,
+      schemaVersion: updated.schema_version,
+      timestamp: new Date().toISOString(),
+    };
+
+    await dispatchEntityEvent(client, { ...baseEvent, event: "updated" });
+
+    if (changedFields.length > 0) {
+      await dispatchEntityEvent(client, { ...baseEvent, event: "field_changed" });
+    }
+
+    if (changedFields.some((f) => f.field === "status")) {
+      await dispatchEntityEvent(client, { ...baseEvent, event: "status_changed" });
+    }
+
     return updated;
   });
 }
@@ -742,6 +788,21 @@ export async function deleteEntityRecord(
       oldState: existing as unknown as Record<string, unknown>,
       newState: null,
       context: { schema_version: existing.schema_version },
+    });
+
+    await dispatchEntityEvent(client, {
+      tenantId: session.tenantId,
+      sourceType: "custom_entity",
+      sourceTarget: "", // resolved inside dispatcher from entityTypeId
+      event: "deleted",
+      entityTypeId,
+      entityId: recordId,
+      actorId: session.userId,
+      oldData: existing.data as Record<string, unknown>,
+      newData: null,
+      changedFields: [],
+      schemaVersion: existing.schema_version,
+      timestamp: new Date().toISOString(),
     });
   });
 }

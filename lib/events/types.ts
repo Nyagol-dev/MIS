@@ -30,7 +30,7 @@ export interface EventSubscriptionRow {
   source_target: string;
   event: 'created' | 'updated' | 'deleted' | 'status_changed' | 'field_changed';
   event_filter: Record<string, unknown>;
-  action_type: 'webhook' | 'internal_notification' | 'field_update' | 'create_record' | 'send_email_template';
+  action_type: 'webhook' | 'internal_notification' | 'field_update' | 'create_record' | 'send_email_template' | 'invalidate_report_cache';
   action_config: Record<string, unknown>;
   is_active: boolean;
   priority: number;

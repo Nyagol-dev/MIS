@@ -41,6 +41,8 @@ const PUBLIC_ROUTE_PREFIXES: readonly string[] = [
   "/login",
   "/signup",
   "/api/auth",     // login/logout API routes
+  "/platform/login",
+  "/api/platform/login",
   "/_next",        // Next.js internals (also excluded by matcher below)
 ];
 

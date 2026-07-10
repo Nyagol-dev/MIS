@@ -45,3 +45,45 @@ export async function writeAuditLog(
 
   await client.query(query, values);
 }
+
+export interface PlatformAuditLogParams {
+  platformAdminId: string | null;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  oldState?: unknown;
+  newState?: unknown;
+  ipAddress?: string;
+  context?: Record<string, unknown>;
+}
+
+export async function writePlatformAuditLog(
+  client: PoolClient,
+  params: PlatformAuditLogParams
+): Promise<void> {
+  const query = `
+    INSERT INTO platform_audit_log (
+      platform_admin_id,
+      action,
+      entity_type,
+      entity_id,
+      old_state,
+      new_state,
+      ip_address,
+      context
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+  `;
+
+  const values = [
+    params.platformAdminId,
+    params.action,
+    params.entityType,
+    params.entityId || null,
+    params.oldState ? JSON.stringify(params.oldState) : null,
+    params.newState ? JSON.stringify(params.newState) : null,
+    params.ipAddress || null,
+    params.context ? JSON.stringify(params.context) : '{}'
+  ];
+
+  await client.query(query, values);
+}

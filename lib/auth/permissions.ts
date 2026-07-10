@@ -22,16 +22,12 @@
  *
  * getEffectivePermissions() resolves both axes in a single withTenantContext
  * call (two queries). The result is cached by the caller for the request scope.
- *
- * requirePlatformAdmin() DOES NOT QUERY THE DB. It is a marker/guard that
- * future code must call before using adminPool. If/when a platform_admin flag
- * is added to the schema, wire it here.
  */
 
 import { withTenantContext } from "@/lib/db/withTenant";
 import { _adminPoolInternal } from "@/lib/db/pool";
 import type { Pool } from "pg";
-import type { SessionPayload, PlatformAdminSessionPayload, AnySessionPayload } from "./session";
+import type { PlatformAdminSessionPayload, AnySessionPayload } from "./session";
 import { requirePlatformAdminSession } from "./platformAdmin";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -222,60 +218,6 @@ export function requireEntityTypePermission(
       `Permission denied: action '${action}' on entity type '${entityTypeId}' is not granted.`
     );
   }
-}
-
-// ─── Platform admin guard ─────────────────────────────────────────────────────
-
-/**
- * Guard that MUST be called before using adminPool for cross-tenant operations.
- *
- * Currently this throws unconditionally — there is no `is_platform_admin` flag
- * on the users table in the current schema. This is an intentional extension
- * point: when a platform-admin mechanism is added to the schema, implement the
- * check here without changing any call sites.
- *
- * TODO: Wire to a `is_platform_admin` column or a separate platform_admins
- *       table when that schema addition is made.
- *
- * @param _session - The verified session payload (will be used for the check
- *                   once a platform-admin flag exists in the schema).
- * @throws {ForbiddenError} Always — until the schema has a platform-admin mechanism.
- *
- * @deprecated Use getPlatformAdminPool(session) from this module for Round 6+
- *             platform-admin operations. This function predates the
- *             platform_admins schema table and does not perform a DB-side
- *             liveness check. It will be removed in a future cleanup round.
- */
-export function requirePlatformAdmin(_session: SessionPayload): void {
-  // TODO: Replace with a real check once the schema includes a platform-admin mechanism.
-  // Example (future):
-  //   if (!_session.isPlatformAdmin) {
-  //     throw new ForbiddenError("Platform admin access required.");
-  //   }
-  throw new ForbiddenError(
-    "Platform admin access is not yet implemented. " +
-      "The schema does not include a platform-admin mechanism. " +
-      "See requirePlatformAdmin() in lib/auth/permissions.ts."
-  );
-}
-
-/**
- * Safely accesses the admin connection pool.
- * Internally runs requirePlatformAdmin(session) to ensure the caller has
- * permission before returning the RLS-bypassing pool.
- *
- * @param session - The verified session payload.
- * @returns The admin Pool instance.
- *
- * @deprecated Use getPlatformAdminPool(session) from this module for Round 6+
- *             platform-admin operations. This function accepts a legacy
- *             SessionPayload (tenant session) and delegates to
- *             requirePlatformAdmin() which unconditionally throws. It will be
- *             removed once all call sites are migrated.
- */
-export async function getAdminPool(session: SessionPayload): Promise<Pool> {
-  requirePlatformAdmin(session);
-  return _adminPoolInternal;
 }
 
 // ─── Round 6: getPlatformAdminPool ───────────────────────────────────────────

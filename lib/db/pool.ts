@@ -13,10 +13,10 @@
  *
  * • `_adminPoolInternal` connects as `mis_admin`, which is the table OWNER and therefore
  *   bypasses RLS entirely. This pool is kept internal and must ONLY be
- *   accessed via the getAdminPool() accessor which enforces the
- *   requirePlatformAdmin() guard.
- *   (lib/auth/permissions.ts). Collapsing these into one pool would silently
- *   break tenant isolation for every admin operation.
+ *   accessed via the getPlatformAdminPool() accessor (lib/auth/permissions.ts) which
+ *   enforces the requirePlatformAdminSession() guard (lib/auth/platformAdmin.ts).
+ *   Collapsing these into one pool would silently break tenant isolation for every
+ *   admin operation.
  *
  * PGBOUNCER / NEON POOLER COMPATIBILITY
  * ─────────────────────────────────────────────────────────────────────────────
@@ -105,14 +105,14 @@ function createAppPool(): Pool {
  *
  * `mis_admin` is the table OWNER and is NOT subject to RLS — it bypasses all
  * tenant isolation policies. This pool must ONLY be used from code that has
- * called requirePlatformAdmin() (lib/auth/permissions.ts) first.
+ * called requirePlatformAdminSession() (lib/auth/platformAdmin.ts) first.
  *
  * Do NOT export or import this pool directly in route handlers or Server Actions.
- * The intended pattern is to use getAdminPool(session) from lib/auth/permissions.ts:
+ * The intended pattern is to use getPlatformAdminPool(session) from lib/auth/permissions.ts:
  *
- *   import { getAdminPool } from "@/lib/auth/permissions";
+ *   import { getPlatformAdminPool } from "@/lib/auth/permissions";
  *
- *   const adminPool = await getAdminPool(session); // internally checks permissions
+ *   const { pool: adminPool } = await getPlatformAdminPool(session); // internally checks permissions
  *   const client = await adminPool.connect();
  *
  * Connection string: DATABASE_URL_ADMIN (may point to the direct Neon endpoint
@@ -147,7 +147,7 @@ export const appPool: Pool =
 
 /**
  * Internal singleton admin pool (mis_admin, bypasses RLS).
- * Do not export directly; use getAdminPool(session) from lib/auth/permissions.ts.
+ * Do not export directly; use getPlatformAdminPool(session) from lib/auth/permissions.ts.
  */
 export const _adminPoolInternal: Pool =
   globalThis.__mis_admin_pool ??
@@ -155,7 +155,7 @@ export const _adminPoolInternal: Pool =
 
 /**
  * FOR CRON AND INTERNAL SYSTEM USE ONLY. Never call from user-facing handlers —
- * use getAdminPool(session) instead. Protected at the call site by CRON_SECRET,
+ * use getPlatformAdminPool(session) instead. Protected at the call site by CRON_SECRET,
  * not by auth middleware.
  *
  * Returns the internal mis_admin pool directly, with NO session check. This

@@ -31,7 +31,8 @@
 import { withTenantContext } from "@/lib/db/withTenant";
 import { _adminPoolInternal } from "@/lib/db/pool";
 import type { Pool } from "pg";
-import type { SessionPayload } from "./session";
+import type { SessionPayload, PlatformAdminSessionPayload, AnySessionPayload } from "./session";
+import { requirePlatformAdminSession } from "./platformAdmin";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -239,6 +240,11 @@ export function requireEntityTypePermission(
  * @param _session - The verified session payload (will be used for the check
  *                   once a platform-admin flag exists in the schema).
  * @throws {ForbiddenError} Always — until the schema has a platform-admin mechanism.
+ *
+ * @deprecated Use getPlatformAdminPool(session) from this module for Round 6+
+ *             platform-admin operations. This function predates the
+ *             platform_admins schema table and does not perform a DB-side
+ *             liveness check. It will be removed in a future cleanup round.
  */
 export function requirePlatformAdmin(_session: SessionPayload): void {
   // TODO: Replace with a real check once the schema includes a platform-admin mechanism.
@@ -260,8 +266,77 @@ export function requirePlatformAdmin(_session: SessionPayload): void {
  *
  * @param session - The verified session payload.
  * @returns The admin Pool instance.
+ *
+ * @deprecated Use getPlatformAdminPool(session) from this module for Round 6+
+ *             platform-admin operations. This function accepts a legacy
+ *             SessionPayload (tenant session) and delegates to
+ *             requirePlatformAdmin() which unconditionally throws. It will be
+ *             removed once all call sites are migrated.
  */
 export async function getAdminPool(session: SessionPayload): Promise<Pool> {
   requirePlatformAdmin(session);
   return _adminPoolInternal;
+}
+
+// ─── Round 6: getPlatformAdminPool ───────────────────────────────────────────
+
+/**
+ * Verifies a platform-admin session and confirms the admin is active in the
+ * database, then returns the RLS-bypassing mis_admin pool and the admin's ID.
+ *
+ * CONTRACT (blueprint Q3)
+ * ─────────────────────────────────────────────────────────────────────────────
+ * 1. Structural check — requirePlatformAdminSession(session) asserts
+ *    session.sessionKind === 'platform_admin'. Throws ForbiddenError otherwise.
+ *
+ * 2. DB-side liveness check — queries platform_admins via _adminPoolInternal
+ *    (the mis_admin pool, NOT appPool, NOT withTenantContext) to confirm
+ *    is_active = true for session.platformAdminId.
+ *    Throws ForbiddenError if the row is not found or is inactive.
+ *
+ * 3. Returns { pool: _adminPoolInternal, platformAdminId } so callers never
+ *    need to import _adminPoolInternal directly.
+ *
+ * WARNING: Do NOT call SET app.current_tenant_id on connections from this pool.
+ * Cross-tenant operations use the pool raw, without a tenant context, per the
+ * Round 6 blueprint's explicit instruction.
+ *
+ * @param session - A verified PlatformAdminSessionPayload (from verifyAnySession).
+ * @returns The mis_admin Pool and the confirmed platformAdminId.
+ * @throws {ForbiddenError} If the session kind is wrong, or the admin is not
+ *                          found / inactive in platform_admins.
+ */
+export async function getPlatformAdminPool(
+  session: AnySessionPayload
+): Promise<{ pool: Pool; platformAdminId: string }> {
+  // ── Step 1: structural check (defense-in-depth; redundant with call-site
+  //    requirePlatformAdminSession but intentional per blueprint Q6). ─────────
+  requirePlatformAdminSession(session);
+  // TypeScript now knows session is PlatformAdminSessionPayload.
+
+  // ── Step 2: DB-side liveness check via the mis_admin pool ─────────────────
+  // Use _adminPoolInternal directly — NOT appPool (which has RLS forced) and
+  // NOT withTenantContext (which would SET app.current_tenant_id, which must
+  // never happen for cross-tenant admin operations).
+  const client = await _adminPoolInternal.connect();
+  try {
+    const result = await client.query<{ id: string; is_active: boolean }>(
+      `SELECT id, is_active
+       FROM platform_admins
+       WHERE id = $1
+       LIMIT 1`,
+      [session.platformAdminId]
+    );
+
+    if (result.rows.length === 0 || !result.rows[0].is_active) {
+      throw new ForbiddenError(
+        "Platform admin access denied: account not found or inactive."
+      );
+    }
+  } finally {
+    client.release();
+  }
+
+  // ── Step 3: return the pool and confirmed ID ───────────────────────────────
+  return { pool: _adminPoolInternal, platformAdminId: session.platformAdminId };
 }

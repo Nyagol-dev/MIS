@@ -323,14 +323,45 @@ export async function deleteRole(
 /**
  * Lists all roles in a tenant, including system roles.
  *
- * @param client   - PoolClient from withTenantContext.
- * @param tenantId - The tenant UUID.
- * @returns Array of RoleRow (may be empty).
+ * @param client     - PoolClient from withTenantContext.
+ * @param tenantId   - The tenant UUID.
+ * @param pagination - Optional { limit?: number; offset?: number }
+ * @returns Paginated result or VALIDATION_ERROR.
  */
 export async function listRoles(
   client: PoolClient,
-  tenantId: string
-): Promise<RoleRow[]> {
+  tenantId: string,
+  pagination?: { limit?: number; offset?: number }
+): Promise<
+  | { items: RoleRow[]; total: number; limit: number; offset: number }
+  | { code: "VALIDATION_ERROR"; message: string }
+> {
+  const limitVal = pagination?.limit !== undefined ? pagination.limit : 50;
+  const offsetVal = pagination?.offset !== undefined ? pagination.offset : 0;
+
+  if (!Number.isInteger(limitVal) || limitVal < 0) {
+    return {
+      code: "VALIDATION_ERROR",
+      message: "limit must be a non-negative integer",
+    };
+  }
+  if (!Number.isInteger(offsetVal) || offsetVal < 0) {
+    return {
+      code: "VALIDATION_ERROR",
+      message: "offset must be a non-negative integer",
+    };
+  }
+
+  const finalLimit = Math.min(limitVal, 200);
+
+  // 1. COUNT(*) query over the same WHERE clause
+  const countResult = await client.query<{ count: string }>(
+    `SELECT count(*) FROM roles WHERE tenant_id = $1`,
+    [tenantId]
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  // 2. Fetch paginated rows
   const { rows } = await client.query<RoleRow>(
     `SELECT tenant_id,
             id,
@@ -341,11 +372,17 @@ export async function listRoles(
             updated_at
        FROM roles
       WHERE tenant_id = $1
-      ORDER BY created_at ASC`,
-    [tenantId]
+      ORDER BY created_at ASC
+      LIMIT $2 OFFSET $3`,
+    [tenantId, finalLimit, offsetVal]
   );
 
-  return rows;
+  return {
+    items: rows,
+    total,
+    limit: finalLimit,
+    offset: offsetVal,
+  };
 }
 
 /**

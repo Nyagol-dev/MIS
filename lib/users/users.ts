@@ -334,22 +334,39 @@ export async function updateUserProfile(
  *
  * Returns both active and inactive users by default.
  *
- * TODO: Add cursor-based or offset pagination — this function currently
- *       returns all matching rows unbounded. For small tenants this is
- *       acceptable in the short term, but must be paginated before any
- *       tenant can accumulate O(10k+) users. Proposed signature extension:
- *         filters?: { isActive?: boolean; cursor?: string; limit?: number }
- *
- * @param client   - PoolClient from withTenantContext.
- * @param tenantId - The tenant UUID.
- * @param filters  - Optional { isActive?: boolean }
- * @returns Array of UserRow (may be empty).
+ * @param client     - PoolClient from withTenantContext.
+ * @param tenantId   - The tenant UUID.
+ * @param filters    - Optional { isActive?: boolean }
+ * @param pagination - Optional { limit?: number; offset?: number }
+ * @returns Paginated result or VALIDATION_ERROR.
  */
 export async function listUsers(
   client: PoolClient,
   tenantId: string,
-  filters?: ListUsersFilters
-): Promise<UserRow[]> {
+  filters?: ListUsersFilters,
+  pagination?: { limit?: number; offset?: number }
+): Promise<
+  | { items: UserRow[]; total: number; limit: number; offset: number }
+  | { code: "VALIDATION_ERROR"; message: string }
+> {
+  const limitVal = pagination?.limit !== undefined ? pagination.limit : 50;
+  const offsetVal = pagination?.offset !== undefined ? pagination.offset : 0;
+
+  if (!Number.isInteger(limitVal) || limitVal < 0) {
+    return {
+      code: "VALIDATION_ERROR",
+      message: "limit must be a non-negative integer",
+    };
+  }
+  if (!Number.isInteger(offsetVal) || offsetVal < 0) {
+    return {
+      code: "VALIDATION_ERROR",
+      message: "offset must be a non-negative integer",
+    };
+  }
+
+  const finalLimit = Math.min(limitVal, 200);
+
   // Build the WHERE clause. The only dynamic predicate is is_active, which is
   // a boolean column — safe to compare to a bind parameter.
   const conditions: string[] = ["tenant_id = $1"];
@@ -359,6 +376,18 @@ export async function listUsers(
     conditions.push(`is_active = $${values.length + 1}`);
     values.push(filters.isActive);
   }
+
+  // 1. COUNT(*) query over the same WHERE clause
+  const countResult = await client.query<{ count: string }>(
+    `SELECT count(*) FROM users WHERE ${conditions.join(" AND ")}`,
+    values
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  // 2. Fetch paginated rows
+  const queryValues = [...values, finalLimit, offsetVal];
+  const limitParam = values.length + 1;
+  const offsetParam = values.length + 2;
 
   const { rows } = await client.query<UserRow>(
     `SELECT tenant_id,
@@ -372,11 +401,17 @@ export async function listUsers(
             updated_at
        FROM users
       WHERE ${conditions.join(" AND ")}
-      ORDER BY created_at ASC`,
-    values
+      ORDER BY created_at ASC
+      LIMIT $${limitParam} OFFSET $${offsetParam}`,
+    queryValues
   );
 
-  return rows;
+  return {
+    items: rows,
+    total,
+    limit: finalLimit,
+    offset: offsetVal,
+  };
 }
 
 /**

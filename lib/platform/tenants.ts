@@ -276,31 +276,72 @@ export async function deactivateTenant(
  * RLS. The function intentionally returns all rows, including inactive ones,
  * so the platform admin can see and manage all tenants.
  *
- * @param session - A verified AnySessionPayload (must be platform_admin kind).
- * @returns Array of OrganizationRow (may be empty).
+ * @param session    - A verified AnySessionPayload (must be platform_admin kind).
+ * @param pagination - Optional { limit?: number; offset?: number }
+ * @returns Paginated result or VALIDATION_ERROR.
  * @throws {ForbiddenError} If the session is not a platform_admin session, or
  *                          the admin is inactive in the database.
  */
 export async function listTenants(
-  session: AnySessionPayload
-): Promise<OrganizationRow[]> {
+  session: AnySessionPayload,
+  pagination?: { limit?: number; offset?: number }
+): Promise<
+  | { items: OrganizationRow[]; total: number; limit: number; offset: number }
+  | { code: "VALIDATION_ERROR"; message: string }
+> {
   // ── Step 1: authorization ─────────────────────────────────────────────────
   requirePlatformAdminSession(session);
   const { pool } = await getPlatformAdminPool(session);
 
-  // ── Step 2: SELECT — no transaction needed for a read-only query ──────────
-  const { rows } = await pool.query<OrganizationRow>(
-    `SELECT id,
-            slug,
-            display_name,
-            org_type,
-            metadata,
-            is_active,
-            created_at,
-            updated_at
-       FROM organizations
-      ORDER BY created_at ASC`
-  );
+  // ── Step 2: Pagination validation ─────────────────────────────────────────
+  const limitVal = pagination?.limit !== undefined ? pagination.limit : 50;
+  const offsetVal = pagination?.offset !== undefined ? pagination.offset : 0;
 
-  return rows;
+  if (!Number.isInteger(limitVal) || limitVal < 0) {
+    return {
+      code: "VALIDATION_ERROR",
+      message: "limit must be a non-negative integer",
+    };
+  }
+  if (!Number.isInteger(offsetVal) || offsetVal < 0) {
+    return {
+      code: "VALIDATION_ERROR",
+      message: "offset must be a non-negative integer",
+    };
+  }
+
+  const finalLimit = Math.min(limitVal, 200);
+
+  // ── Step 3: Execute queries on the same client ────────────────────────────
+  const client = await pool.connect();
+  try {
+    const countResult = await client.query<{ count: string }>(
+      `SELECT count(*) FROM organizations`
+    );
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    const { rows } = await client.query<OrganizationRow>(
+      `SELECT id,
+              slug,
+              display_name,
+              org_type,
+              metadata,
+              is_active,
+              created_at,
+              updated_at
+         FROM organizations
+        ORDER BY created_at ASC
+        LIMIT $1 OFFSET $2`,
+      [finalLimit, offsetVal]
+    );
+
+    return {
+      items: rows,
+      total,
+      limit: finalLimit,
+      offset: offsetVal,
+    };
+  } finally {
+    client.release();
+  }
 }

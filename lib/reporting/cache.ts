@@ -9,7 +9,8 @@ export async function readCache(
     `
     SELECT *
       FROM report_cache
-     WHERE report_definition_id = $1
+     WHERE tenant_id = current_tenant_id()
+       AND report_definition_id = $1
        AND is_stale = FALSE
        AND computed_at + (ttl_seconds * interval '1 second') > now()
     `,

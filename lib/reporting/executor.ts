@@ -25,6 +25,8 @@ export async function executeReport(
   session: SessionPayload,
   reportDefinitionId: string
 ): Promise<ReportResult> {
+  const perms = await getEffectivePermissions(session.tenantId, session.userId);
+
   return withTenantContext(session.tenantId, async (client) => {
     // 1. Load report_definitions row.
     const { rows: defRows } = await client.query<ReportDefinitionRow>(
@@ -39,8 +41,8 @@ export async function executeReport(
     }
     const definition = defRows[0];
 
-    // 2. Load permissions
-    const perms = await getEffectivePermissions(session.tenantId, session.userId);
+    // 2. Permission check
+
     if (!canOnEntityType(perms, definition.entity_type_id, 'read')) {
       throw new ForbiddenError(
         `Permission denied: action 'read' on entity type '${definition.entity_type_id}' is not granted.`
@@ -110,6 +112,8 @@ export async function executeAdHocReport(
   session: SessionPayload,
   params: AdHocReportParams
 ): Promise<ReportResult> {
+  const perms = await getEffectivePermissions(session.tenantId, session.userId);
+
   return withTenantContext(session.tenantId, async (client) => {
     // 1. Validate template_type
     if (!(params.template_type in TEMPLATE_STRATEGY_MAP)) {
@@ -117,7 +121,6 @@ export async function executeAdHocReport(
     }
 
     // 2. Permission check
-    const perms = await getEffectivePermissions(session.tenantId, session.userId);
     if (!canOnEntityType(perms, params.entity_type_id, 'read')) {
       throw new ForbiddenError(
         `Permission denied: action 'read' on entity type '${params.entity_type_id}' is not granted.`
@@ -169,6 +172,8 @@ export async function refreshReport(
   session: SessionPayload,
   reportDefinitionId: string
 ): Promise<ReportResult> {
+  const perms = await getEffectivePermissions(session.tenantId, session.userId);
+
   return withTenantContext(session.tenantId, async (client) => {
     // 1. Load definition + permission check
     const { rows: defRows } = await client.query<ReportDefinitionRow>(
@@ -183,7 +188,7 @@ export async function refreshReport(
     }
     const definition = defRows[0];
 
-    const perms = await getEffectivePermissions(session.tenantId, session.userId);
+
     if (!canOnEntityType(perms, definition.entity_type_id, 'read')) {
       throw new ForbiddenError(
         `Permission denied: action 'read' on entity type '${definition.entity_type_id}' is not granted.`

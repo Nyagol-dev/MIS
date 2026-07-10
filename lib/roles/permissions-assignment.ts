@@ -173,12 +173,15 @@ export async function assignGlobalPermission(
  * `role_permissions` row (the one where `permission_id` matches and
  * `override_id` is NULL).
  *
+ * Rejects if the target role has `is_system = TRUE` (system roles cannot be
+ * modified programmatically).
+ *
  * @param client       - PoolClient from withTenantContext.
  * @param tenantId     - The tenant UUID.
  * @param roleId       - UUID of the role to revoke from.
  * @param permissionId - UUID of the global permission to revoke.
  * @param actorUserId  - UUID of the session user performing this action.
- * @returns undefined on success.
+ * @returns undefined on success, or a typed error.
  */
 export async function revokeGlobalPermission(
   client: PoolClient,
@@ -186,7 +189,24 @@ export async function revokeGlobalPermission(
   roleId: string,
   permissionId: string,
   actorUserId: string
-): Promise<undefined> {
+): Promise<ForbiddenSystemRoleError | NotFoundError | undefined> {
+  // Guard: system role check.
+  const isSystem = await fetchRoleIsSystem(client, tenantId, roleId);
+
+  if (isSystem === undefined) {
+    return {
+      code: "NOT_FOUND",
+      message: `Role '${roleId}' not found in tenant '${tenantId}'.`,
+    };
+  }
+
+  if (isSystem) {
+    return {
+      code: "FORBIDDEN_SYSTEM_ROLE",
+      message: `Role '${roleId}' is a system role and cannot be modified.`,
+    };
+  }
+
   await client.query(
     `DELETE FROM role_permissions
       WHERE tenant_id     = $1
@@ -302,12 +322,15 @@ export async function assignPermissionOverride(
  * matching `role_permissions` row (where `override_id` matches and
  * `permission_id` is NULL).
  *
+ * Rejects if the target role has `is_system = TRUE` (system roles cannot be
+ * modified programmatically).
+ *
  * @param client      - PoolClient from withTenantContext.
  * @param tenantId    - The tenant UUID.
  * @param roleId      - UUID of the role to revoke from.
  * @param overrideId  - UUID of the tenant_permission_overrides entry.
  * @param actorUserId - UUID of the session user performing this action.
- * @returns undefined on success.
+ * @returns undefined on success, or a typed error.
  */
 export async function revokePermissionOverride(
   client: PoolClient,
@@ -315,7 +338,24 @@ export async function revokePermissionOverride(
   roleId: string,
   overrideId: string,
   actorUserId: string
-): Promise<undefined> {
+): Promise<ForbiddenSystemRoleError | NotFoundError | undefined> {
+  // Guard: system role check.
+  const isSystem = await fetchRoleIsSystem(client, tenantId, roleId);
+
+  if (isSystem === undefined) {
+    return {
+      code: "NOT_FOUND",
+      message: `Role '${roleId}' not found in tenant '${tenantId}'.`,
+    };
+  }
+
+  if (isSystem) {
+    return {
+      code: "FORBIDDEN_SYSTEM_ROLE",
+      message: `Role '${roleId}' is a system role and cannot be modified.`,
+    };
+  }
+
   await client.query(
     `DELETE FROM role_permissions
       WHERE tenant_id   = $1
@@ -349,6 +389,11 @@ export async function revokePermissionOverride(
  * issuing any query:
  *   CHECK (action IN ('create', 'read', 'update', 'delete', 'manage'))
  *
+ * Security: explicitly verifies that `entityTypeId` belongs to this tenant
+ * before inserting. Mirrors the IDOR guard in assignPermissionOverride.
+ *
+ * Rejects if the target role has `is_system = TRUE`.
+ *
  * @param client       - PoolClient from withTenantContext.
  * @param tenantId     - The tenant UUID.
  * @param roleId       - UUID of the role to receive the grant.
@@ -364,7 +409,13 @@ export async function grantEntityTypePermission(
   entityTypeId: string,
   action: EntityAction,
   actorUserId: string
-): Promise<InvalidActionError | undefined> {
+): Promise<
+  | InvalidActionError
+  | ForbiddenSystemRoleError
+  | NotFoundError
+  | TenantMismatchError
+  | undefined
+> {
   // Validate action against the schema's CHECK constraint.
   // We do this in application code so we surface a typed error rather than
   // letting Postgres raise an unchecked constraint violation.
@@ -372,6 +423,40 @@ export async function grantEntityTypePermission(
     return {
       code: "INVALID_ACTION",
       message: `Invalid entity action '${action}'. Must be one of: ${[...ALLOWED_ENTITY_ACTIONS].join(", ")}.`,
+    };
+  }
+
+  // Guard: system role check.
+  const isSystem = await fetchRoleIsSystem(client, tenantId, roleId);
+
+  if (isSystem === undefined) {
+    return {
+      code: "NOT_FOUND",
+      message: `Role '${roleId}' not found in tenant '${tenantId}'.`,
+    };
+  }
+
+  if (isSystem) {
+    return {
+      code: "FORBIDDEN_SYSTEM_ROLE",
+      message: `Role '${roleId}' is a system role and cannot be modified.`,
+    };
+  }
+
+  // Security: confirm entity_type_id belongs to this tenant.
+  // Explicit IDOR guard — we do not rely solely on RLS.
+  const { rows: entityTypeRows } = await client.query<{ id: string }>(
+    `SELECT id FROM entity_types
+      WHERE tenant_id = $1 AND id = $2`,
+    [tenantId, entityTypeId]
+  );
+
+  if (entityTypeRows.length === 0) {
+    // Either the entity type does not exist, or it belongs to a different tenant.
+    // Return TenantMismatch rather than NotFound to avoid leaking cross-tenant UUIDs.
+    return {
+      code: "TENANT_MISMATCH",
+      message: `Entity type '${entityTypeId}' does not exist or does not belong to tenant '${tenantId}'.`,
     };
   }
 
@@ -403,6 +488,7 @@ export async function grantEntityTypePermission(
  * matching `role_entity_type_permissions` row.
  *
  * Validates `action` before issuing any query.
+ * Rejects if the target role has `is_system = TRUE`.
  *
  * @param client       - PoolClient from withTenantContext.
  * @param tenantId     - The tenant UUID.
@@ -419,11 +505,28 @@ export async function revokeEntityTypePermission(
   entityTypeId: string,
   action: EntityAction,
   actorUserId: string
-): Promise<InvalidActionError | undefined> {
+): Promise<InvalidActionError | ForbiddenSystemRoleError | NotFoundError | undefined> {
   if (!ALLOWED_ENTITY_ACTIONS.has(action)) {
     return {
       code: "INVALID_ACTION",
       message: `Invalid entity action '${action}'. Must be one of: ${[...ALLOWED_ENTITY_ACTIONS].join(", ")}.`,
+    };
+  }
+
+  // Guard: system role check.
+  const isSystem = await fetchRoleIsSystem(client, tenantId, roleId);
+
+  if (isSystem === undefined) {
+    return {
+      code: "NOT_FOUND",
+      message: `Role '${roleId}' not found in tenant '${tenantId}'.`,
+    };
+  }
+
+  if (isSystem) {
+    return {
+      code: "FORBIDDEN_SYSTEM_ROLE",
+      message: `Role '${roleId}' is a system role and cannot be modified.`,
     };
   }
 

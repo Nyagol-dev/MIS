@@ -51,7 +51,33 @@ export interface SessionPayload {
   userId: string;
   tenantId: string;
   issuedAt: number;
+  /** Optional discriminator added in Round 6. Absent on legacy tokens — treated as 'tenant'. */
+  sessionKind?: "tenant";
 }
+
+// ─── Platform-admin session types (Round 6) ───────────────────────────────────
+
+/**
+ * JWT payload for platform-admin sessions.
+ *
+ * These tokens are issued to MIS super-admins and are entirely separate
+ * from tenant user sessions. They carry no tenantId.
+ */
+export interface PlatformAdminSessionPayload {
+  sessionKind: "platform_admin";
+  platformAdminId: string;
+  issuedAt: number;
+}
+
+/**
+ * Discriminated union of every valid session kind understood by this system.
+ *
+ * Use this type — and `verifyAnySession` — at route-handler entry points
+ * that must accept either tenant users or platform admins.
+ */
+export type AnySessionPayload =
+  | (SessionPayload & { sessionKind: "tenant" })
+  | PlatformAdminSessionPayload;
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
@@ -133,6 +159,95 @@ export async function verifySession(token: string): Promise<SessionPayload> {
     tenantId: payload["tenantId"] as string,
     issuedAt: payload["issuedAt"] as number,
   };
+}
+
+// ─── Platform-admin JWT helpers (Round 6) ────────────────────────────────────
+
+/**
+ * Creates a signed HS256 JWT for a platform-admin session.
+ *
+ * Uses the same SESSION_SECRET and JWT_ALGORITHM as `createSession` so that
+ * a single secret covers all token kinds. The `sessionKind` claim is what
+ * distinguishes the two at verification time.
+ *
+ * @param platformAdminId - The platform admin's unique identifier.
+ * @returns A compact JWT string suitable for storing in a cookie.
+ */
+export async function createPlatformAdminSession(
+  platformAdminId: string
+): Promise<string> {
+  const secret = getSecret();
+  const ttl = getTTLSeconds();
+  const now = Math.floor(Date.now() / 1000);
+
+  return new SignJWT({
+    sessionKind: "platform_admin" as const,
+    platformAdminId,
+    issuedAt: now,
+  } satisfies Omit<PlatformAdminSessionPayload, "issuedAt"> & { issuedAt: number } & JWTPayload)
+    .setProtectedHeader({ alg: JWT_ALGORITHM })
+    .setIssuedAt(now)
+    .setExpirationTime(now + ttl)
+    .sign(secret);
+}
+
+/**
+ * Verifies a JWT and returns the appropriate typed session payload.
+ *
+ * Discrimination rules (confirmed team decision, Round 6):
+ * - `sessionKind === 'platform_admin'` → PlatformAdminSessionPayload
+ * - `sessionKind === 'tenant'` OR absent (legacy tokens) → tenant branch of
+ *   AnySessionPayload. Absent sessionKind is NOT treated as an error — no
+ *   forced re-login for existing tenant sessions.
+ * - Invalid / expired / unparseable tokens → returns null (never throws).
+ *
+ * @param token - The raw JWT string (from a cookie or Authorization header).
+ * @returns The typed AnySessionPayload, or null on any failure.
+ */
+export async function verifyAnySession(
+  token: string
+): Promise<AnySessionPayload | null> {
+  try {
+    const secret = getSecret();
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: [JWT_ALGORITHM],
+    });
+
+    const kind = payload["sessionKind"];
+
+    if (kind === "platform_admin") {
+      // ── Platform-admin branch ──────────────────────────────────────────────
+      if (
+        typeof payload["platformAdminId"] !== "string" ||
+        typeof payload["issuedAt"] !== "number"
+      ) {
+        return null;
+      }
+      return {
+        sessionKind: "platform_admin",
+        platformAdminId: payload["platformAdminId"] as string,
+        issuedAt: payload["issuedAt"] as number,
+      } satisfies PlatformAdminSessionPayload;
+    }
+
+    // ── Tenant branch (sessionKind === 'tenant' OR absent) ─────────────────
+    if (
+      typeof payload["userId"] !== "string" ||
+      typeof payload["tenantId"] !== "string" ||
+      typeof payload["issuedAt"] !== "number"
+    ) {
+      return null;
+    }
+    return {
+      sessionKind: "tenant",
+      userId: payload["userId"] as string,
+      tenantId: payload["tenantId"] as string,
+      issuedAt: payload["issuedAt"] as number,
+    } satisfies SessionPayload & { sessionKind: "tenant" };
+  } catch {
+    // Token is expired, tampered, or otherwise invalid — return null.
+    return null;
+  }
 }
 
 // ─── Cookie helpers ───────────────────────────────────────────────────────────

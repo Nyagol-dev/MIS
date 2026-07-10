@@ -33,7 +33,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
     requirePlatformAdminSession(session);
 
-    const admins = await listPlatformAdmins(session);
+    const limitParam = request.nextUrl.searchParams.get('limit');
+    const offsetParam = request.nextUrl.searchParams.get('offset');
+    let limit: number | undefined;
+    let offset: number | undefined;
+
+    if (limitParam !== null) {
+      limit = parseInt(limitParam, 10);
+      if (Number.isNaN(limit)) {
+        return NextResponse.json({ error: 'limit must be a valid integer' }, { status: 400 });
+      }
+    }
+    if (offsetParam !== null) {
+      offset = parseInt(offsetParam, 10);
+      if (Number.isNaN(offset)) {
+        return NextResponse.json({ error: 'offset must be a valid integer' }, { status: 400 });
+      }
+    }
+
+    const admins = await listPlatformAdmins(session, { limit, offset });
+    if ('code' in admins) return handleError(admins);
+
     return NextResponse.json(admins, { status: 200 });
   } catch (error) {
     return handleError(error);

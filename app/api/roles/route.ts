@@ -36,7 +36,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const authErr = await requireTenantAdmin(client, session);
       if (authErr) return handleError(authErr);
 
-      const roles = await listRoles(client, session.tenantId);
+      const limitParam = request.nextUrl.searchParams.get('limit');
+      const offsetParam = request.nextUrl.searchParams.get('offset');
+      let limit: number | undefined;
+      let offset: number | undefined;
+
+      if (limitParam !== null) {
+        limit = parseInt(limitParam, 10);
+        if (Number.isNaN(limit)) {
+          return NextResponse.json({ error: 'limit must be a valid integer' }, { status: 400 });
+        }
+      }
+      if (offsetParam !== null) {
+        offset = parseInt(offsetParam, 10);
+        if (Number.isNaN(offset)) {
+          return NextResponse.json({ error: 'offset must be a valid integer' }, { status: 400 });
+        }
+      }
+
+      const roles = await listRoles(client, session.tenantId, { limit, offset });
+      if ('code' in roles) return handleError(roles);
+
       return NextResponse.json(roles, { status: 200 });
     });
   } catch (error) {

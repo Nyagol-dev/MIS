@@ -42,6 +42,7 @@ import { writeAuditLog } from "@/lib/db/audit";
 import { getProviderCredentials } from "@/lib/billing/providerConfig";
 import { getPaymentProvider } from "@/lib/billing/providers/registry";
 import { markInvoicePaid } from "@/lib/billing/invoices";
+import { dispatchBillingEvent } from "@/lib/billing/events";
 import type {
   InitiatePaymentResult,
   PaymentStatusUpdate,
@@ -376,41 +377,21 @@ export async function processPaymentStatusUpdate(
     },
   });
 
-  // ── 5. dispatchBillingEvent — DEPENDENCY: Task 8.9 ────────────────────────
-  //
-  // TODO(Task 8.9): When lib/billing/events.ts is implemented, replace this
-  // no-op stub with a static import at the top of this file:
-  //
-  //   import { dispatchBillingEvent } from "@/lib/billing/events";
-  //
-  // Then replace the console.debug below with:
-  //
-  //   await dispatchBillingEvent(client, tenantId, {
-  //     eventType: update.status === "succeeded" ? "payment_succeeded" : "payment_failed",
-  //     entityType: "payment_request",
-  //     entityId: paymentRequestId,
-  //     payload: {
-  //       providerSlug: row.provider_slug,
-  //       providerPaymentId: update.providerPaymentId,
-  //       amountMinorUnits: row.amount_minor_units,
-  //       currency: row.currency,
-  //       invoiceId: row.invoice_id,
-  //       failureReason: update.failureReason ?? null,
-  //     },
-  //   });
-  //
-  // NOTE: A dynamic import() does NOT suppress TypeScript's static module
-  // resolution — the compiler resolves the path at compile time regardless,
-  // so using import("@/lib/billing/events") here would still produce a
-  // "Cannot find module" error until the file exists. Plain no-op until
-  // Task 8.9 creates the module.
-  console.debug(
-    "[payments] dispatchBillingEvent: Task 8.9 not yet implemented — skipping.",
-    {
-      eventType:
-        update.status === "succeeded" ? "payment_succeeded" : "payment_failed",
-      paymentRequestId,
-      tenantId,
-    }
-  );
+  // ── 5. dispatchBillingEvent ───────────────────────────────────────────────
+  await dispatchBillingEvent(client, {
+    tenantId,
+    eventType: update.status === "succeeded" ? "payment_succeeded" : "payment_failed",
+    resourceType: "payment_request",
+    resourceId: paymentRequestId,
+    actorId: null,
+    data: {
+      providerSlug: row.provider_slug,
+      providerPaymentId: update.providerPaymentId,
+      amountMinorUnits: row.amount_minor_units,
+      currency: row.currency,
+      invoiceId: row.invoice_id,
+      failureReason: update.failureReason ?? null,
+    },
+    timestamp: new Date().toISOString(),
+  });
 }

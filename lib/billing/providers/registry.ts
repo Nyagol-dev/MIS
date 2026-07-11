@@ -13,19 +13,19 @@
  * Round 8 implementation status:
  *
  *   'stripe' — ✅ implemented (lib/billing/providers/stripe.ts, Task 8.2)
- *   'mpesa'  — 🔲 NOT_YET_IMPLEMENTED (Task 8.4 will complete this entry)
+ *   'mpesa'  — ✅ implemented (lib/billing/providers/mpesa.ts, Task 8.4)
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 import type { PaymentProvider } from "@/lib/billing/providers/types";
 import { StripePaymentProvider } from "@/lib/billing/providers/stripe";
+import { MpesaPaymentProvider } from "@/lib/billing/providers/mpesa";
 
 /**
  * Returns the PaymentProvider implementation for the given slug.
  *
  * @param slug - The provider identifier ('stripe' | 'mpesa').
  * @returns The concrete PaymentProvider.
- * @throws If slug is 'mpesa' (NOT_YET_IMPLEMENTED — Task 8.4).
  * @throws If slug is an unrecognised value (programming error).
  */
 export function getPaymentProvider(slug: "stripe" | "mpesa"): PaymentProvider {
@@ -34,13 +34,7 @@ export function getPaymentProvider(slug: "stripe" | "mpesa"): PaymentProvider {
       return new StripePaymentProvider();
 
     case "mpesa":
-      // TODO (Task 8.4): import MpesaPaymentProvider and wire it up here.
-      // Do NOT implement M-Pesa logic in this file — it belongs in
-      // lib/billing/providers/mpesa.ts, mirroring the Stripe structure.
-      throw new Error(
-        "NOT_YET_IMPLEMENTED: M-Pesa PaymentProvider is scoped to Task 8.4. " +
-          "getPaymentProvider('mpesa') will be completed in that task."
-      );
+      return new MpesaPaymentProvider();
 
     default: {
       // TypeScript exhaustiveness guard — if a new slug is added to the union

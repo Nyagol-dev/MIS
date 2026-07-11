@@ -78,7 +78,7 @@ export function decryptCredentials(encrypted: Buffer): Record<string, string> {
     decrypted = Buffer.concat([decrypted, decipher.final()]);
 
     return JSON.parse(decrypted.toString("utf8")) as Record<string, string>;
-  } catch (err) {
+  } catch {
     // Wrap any decryption, verification, or JSON parsing error inside DecryptionFailedError.
     throw new DecryptionFailedError();
   }

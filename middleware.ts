@@ -43,6 +43,7 @@ const PUBLIC_ROUTE_PREFIXES: readonly string[] = [
   "/api/auth",     // login/logout API routes
   "/platform/login",
   "/api/platform/login",
+  "/api/webhooks/",// webhook callbacks for payment providers
   "/_next",        // Next.js internals (also excluded by matcher below)
 ];
 

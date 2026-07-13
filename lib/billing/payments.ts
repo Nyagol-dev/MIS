@@ -60,7 +60,7 @@ export interface InitiatePaymentParams {
   /** Provider slug ('stripe' | 'mpesa'). */
   providerSlug: "stripe" | "mpesa";
   /** Amount in the smallest currency unit (cents, etc.) — BIGINT, no float. */
-  amountMinorUnits: number;
+  amountMinorUnits: bigint;
   /** ISO 4217 currency code, e.g. 'KES'. */
   currency: string;
   /**
@@ -86,7 +86,7 @@ interface PaymentRequestRow {
   invoice_id: string | null;
   provider_slug: "stripe" | "mpesa";
   status: "initiated" | "pending" | "succeeded" | "failed" | "expired";
-  amount_minor_units: number;
+  amount_minor_units: bigint;
   currency: string;
   provider_payment_id: string | null;
   provider_config: Record<string, unknown> | null;
@@ -173,7 +173,9 @@ export async function initiatePayment(
   const initiateResult = await provider.initiatePayment(
     {
       paymentRequestId: paymentRequest.id,
-      amountMinorUnits,
+      // The provider SDK / types expect a JS number for amountMinorUnits.
+      // We convert the bigint explicitly here to satisfy the provider interface.
+      amountMinorUnits: Number(amountMinorUnits),
       currency,
       description,
       customerRef,
@@ -236,14 +238,14 @@ export async function initiatePayment(
       status: "pending",
       providerSlug,
       providerPaymentId,
-      amountMinorUnits,
+      amountMinorUnits: String(amountMinorUnits),
       currency,
       billingCustomerId,
       invoiceId: invoiceId ?? null,
     },
     context: {
       providerSlug,
-      amountMinorUnits,
+      amountMinorUnits: String(amountMinorUnits),
       currency,
       invoiceId: invoiceId ?? null,
     },
@@ -387,7 +389,7 @@ export async function processPaymentStatusUpdate(
     data: {
       providerSlug: row.provider_slug,
       providerPaymentId: update.providerPaymentId,
-      amountMinorUnits: row.amount_minor_units,
+      amountMinorUnits: String(row.amount_minor_units),
       currency: row.currency,
       invoiceId: row.invoice_id,
       failureReason: update.failureReason ?? null,

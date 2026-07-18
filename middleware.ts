@@ -58,9 +58,18 @@ const PUBLIC_ROUTE_PREFIXES: readonly string[] = [
 ];
 
 /**
+ * Exact public paths (not prefix-matched) — listed separately so that
+ * a prefix like "/" cannot accidentally bypass auth on all routes.
+ */
+const PUBLIC_EXACT_PATHS: readonly string[] = [
+  "/", // Marketing homepage — publicly accessible without a session
+];
+
+/**
  * Returns true if the requested pathname should bypass auth gating.
  */
 function isPublicRoute(pathname: string): boolean {
+  if (PUBLIC_EXACT_PATHS.includes(pathname)) return true;
   return PUBLIC_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 

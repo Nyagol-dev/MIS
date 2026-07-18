@@ -1,6 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { verifyAnySession } from '@/lib/auth/session';
+import { verifyAnySession, COOKIE_NAME } from '@/lib/auth/session';
+import { cookies } from 'next/headers';
 import { getEffectivePermissions, canOnEntityType } from '@/lib/auth/permissions';
 import { listEntityTypes } from '@/lib/entities/types';
 import { withTenantContext } from '@/lib/db/withTenant';
@@ -11,8 +12,10 @@ export const metadata = {
 };
 
 export default async function EntitiesPage() {
-  const session = await verifyAnySession();
-  if (!session || session.session_type !== 'tenant') {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const session = token ? await verifyAnySession(token) : null;
+  if (!session || session.sessionKind !== 'tenant') {
     redirect('/login');
   }
 
@@ -23,7 +26,7 @@ export default async function EntitiesPage() {
 
   // Filter based on read permissions
   const perms = await getEffectivePermissions(session.tenantId, session.userId);
-  const allowedEntityTypes = result.data.filter((et) => 
+  const allowedEntityTypes = result.items.filter((et) => 
     canOnEntityType(perms, et.id, 'read')
   );
 

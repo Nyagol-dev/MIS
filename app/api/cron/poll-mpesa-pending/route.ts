@@ -256,6 +256,6 @@ async function processPendingRow(
     // ⚠️  TASK 8.8 DEPENDENCY: processPaymentStatusUpdate is defined in
     // lib/billing/payments.ts (created in Task 8.8).  This call will not
     // compile until that task is merged.
-    await processPaymentStatusUpdate(client, row.tenant_id, update);
+    await processPaymentStatusUpdate(client, row.tenant_id, update, row.id);
   });
 }

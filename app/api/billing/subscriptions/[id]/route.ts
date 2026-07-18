@@ -15,7 +15,7 @@ function handleError(error: any) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -25,7 +25,7 @@ export async function GET(
       const authErr = await requireBillingPermission(client, session, 'billing:read');
       if (authErr) return handleError(authErr);
 
-      const subscription = await getSubscription(client, session.tenantId, params.id);
+      const subscription = await getSubscription(client, session.tenantId, (await props.params).id);
       if ('code' in subscription) return handleError(subscription);
       return NextResponse.json(subscription, { status: 200 });
     });
@@ -36,7 +36,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -48,7 +48,7 @@ export async function PATCH(
       const authErr = await requireBillingPermission(client, session, 'billing:update');
       if (authErr) return handleError(authErr);
 
-      const subscription = await transitionSubscriptionStatus(client, session.tenantId, params.id, body.status, body.reason);
+      const subscription = await transitionSubscriptionStatus(client, session.tenantId, (await props.params).id, body.status, body.reason);
       if ('code' in subscription) return handleError(subscription);
       return NextResponse.json(subscription, { status: 200 });
     });
@@ -59,7 +59,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -71,7 +71,7 @@ export async function DELETE(
       const authErr = await requireBillingPermission(client, session, 'billing:delete');
       if (authErr) return handleError(authErr);
 
-      const subscription = await cancelSubscription(client, session.tenantId, params.id, body?.reason);
+      const subscription = await cancelSubscription(client, session.tenantId, (await props.params).id, body?.reason);
       if ('code' in subscription) return handleError(subscription);
       return NextResponse.json(subscription, { status: 200 });
     });

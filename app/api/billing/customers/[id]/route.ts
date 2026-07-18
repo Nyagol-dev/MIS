@@ -15,7 +15,7 @@ function handleError(error: any) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -25,7 +25,7 @@ export async function GET(
       const authErr = await requireBillingPermission(client, session, 'billing:read');
       if (authErr) return handleError(authErr);
 
-      const customer = await getBillingCustomer(client, session.tenantId, params.id);
+      const customer = await getBillingCustomer(client, session.tenantId, (await props.params).id);
       if ('code' in customer) return handleError(customer);
       return NextResponse.json(customer, { status: 200 });
     });
@@ -36,7 +36,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -48,7 +48,7 @@ export async function PATCH(
       const authErr = await requireBillingPermission(client, session, 'billing:update');
       if (authErr) return handleError(authErr);
 
-      const customer = await updateBillingCustomer(client, session.tenantId, params.id, body);
+      const customer = await updateBillingCustomer(client, session.tenantId, (await props.params).id, body);
       if ('code' in customer) return handleError(customer);
       return NextResponse.json(customer, { status: 200 });
     });
@@ -59,7 +59,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -69,7 +69,7 @@ export async function DELETE(
       const authErr = await requireBillingPermission(client, session, 'billing:delete');
       if (authErr) return handleError(authErr);
 
-      const customer = await deactivateBillingCustomer(client, session.tenantId, params.id);
+      const customer = await deactivateBillingCustomer(client, session.tenantId, (await props.params).id);
       if ('code' in customer) return handleError(customer);
       return NextResponse.json(customer, { status: 200 });
     });

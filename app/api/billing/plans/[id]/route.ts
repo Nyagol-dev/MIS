@@ -16,7 +16,7 @@ function handleError(error: any) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -26,7 +26,7 @@ export async function GET(
       const authErr = await requireBillingPermission(client, session, 'billing:read');
       if (authErr) return handleError(authErr);
 
-      const plan = await getPlan(client, session.tenantId, params.id);
+      const plan = await getPlan(client, session.tenantId, (await props.params).id);
       if ('code' in plan) return handleError(plan);
       return NextResponse.json(plan, { status: 200 });
     });
@@ -37,7 +37,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -49,7 +49,7 @@ export async function PATCH(
       const authErr = await requireBillingPermission(client, session, 'billing:update');
       if (authErr) return handleError(authErr);
 
-      const plan = await updatePlan(client, session.tenantId, params.id, body);
+      const plan = await updatePlan(client, session.tenantId, (await props.params).id, body);
       if ('code' in plan) return handleError(plan);
       return NextResponse.json(plan, { status: 200 });
     });
@@ -60,7 +60,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -70,7 +70,7 @@ export async function DELETE(
       const authErr = await requireBillingPermission(client, session, 'billing:delete');
       if (authErr) return handleError(authErr);
 
-      const plan = await deactivatePlan(client, session.tenantId, params.id);
+      const plan = await deactivatePlan(client, session.tenantId, (await props.params).id);
       if ('code' in plan) return handleError(plan);
       return NextResponse.json(plan, { status: 200 });
     });

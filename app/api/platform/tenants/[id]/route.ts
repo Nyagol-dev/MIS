@@ -23,7 +23,7 @@ function handleError(error: any) {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const cookie = request.cookies.get(COOKIE_NAME);
@@ -36,7 +36,7 @@ export async function DELETE(
     }
     requirePlatformAdminSession(session);
 
-    const result = await deactivateTenant(session, params.id);
+    const result = await deactivateTenant(session, (await props.params).id);
     
     if (result && 'code' in result && result.code === 'TENANT_NOT_FOUND') {
       return NextResponse.json({ error: result.message }, { status: 404 });

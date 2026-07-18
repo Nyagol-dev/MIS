@@ -1,6 +1,7 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
-import { verifyAnySession } from '@/lib/auth/session';
+import { verifyAnySession, COOKIE_NAME } from '@/lib/auth/session';
+import { cookies } from 'next/headers';
 import { getEffectivePermissions, canOnEntityType } from '@/lib/auth/permissions';
 import { getEntityTypeBySlug, listFieldDefinitions } from '@/lib/entities/types';
 import { getEntityRecord } from '@/lib/entities/records';
@@ -20,8 +21,10 @@ interface PageProps {
 }
 
 export default async function EditRecordPage({ params }: PageProps) {
-  const session = await verifyAnySession();
-  if (!session || session.session_type !== 'tenant') {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const session = token ? await verifyAnySession(token) : null;
+  if (!session || session.sessionKind !== 'tenant') {
     redirect('/login');
   }
 
@@ -32,7 +35,7 @@ export default async function EditRecordPage({ params }: PageProps) {
     return getEntityTypeBySlug(client, session.tenantId, entityTypeSlug);
   });
 
-  if (!entityType || 'error' in entityType) {
+  if (!entityType || 'code' in entityType) {
     notFound();
   }
 
@@ -49,11 +52,17 @@ export default async function EditRecordPage({ params }: PageProps) {
   }
 
   // Load field definitions AT THE RECORD'S PINNED SCHEMA VERSION
-  const fieldDefs = await withTenantContext(session.tenantId, async (client) => {
+  const fieldDefsResult = await withTenantContext(session.tenantId, async (client) => {
     return listFieldDefinitions(client, session.tenantId, entityTypeSlug, {
       version: record.schema_version,
     });
   });
+
+  if ('code' in fieldDefsResult) {
+    notFound();
+  }
+
+  const fieldDefs = fieldDefsResult.items;
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">

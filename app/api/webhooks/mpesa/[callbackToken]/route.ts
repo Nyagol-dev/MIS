@@ -13,7 +13,7 @@
  * Defence-in-depth layers (in strict order — do NOT reorder):
  *
  *   Layer 1 — URL token check (FIRST):
- *     params.callbackToken is compared against process.env.MPESA_CALLBACK_TOKEN.
+ *     (await props.params).callbackToken is compared against process.env.MPESA_CALLBACK_TOKEN.
  *     Mismatch → 403 immediately, before reading the request body at all.
  *     This prevents unauthenticated parties from causing any processing.
  *
@@ -55,7 +55,7 @@
  *
  * EVENT PROCESSING SEQUENCE (load-bearing — do not reorder):
  *
- *   1. Check params.callbackToken against MPESA_CALLBACK_TOKEN env. → 403 on
+ *   1. Check (await props.params).callbackToken against MPESA_CALLBACK_TOKEN env. → 403 on
  *      mismatch, before reading the body.
  *   2. IP allowlist check. → 403 on mismatch (configurable — see Layer 2 above).
  *   3. Read raw body. Parse via mpesaProvider.verifyWebhook() (structural only).
@@ -130,7 +130,7 @@ function getClientIp(request: NextRequest): string | undefined {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { callbackToken: string } }
+  props: { params: Promise<{ callbackToken: string }> }
 ): Promise<NextResponse> {
   // ── STEP 1: URL token check — FIRST, before touching the request body ──────
   //
@@ -147,7 +147,7 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  if (params.callbackToken !== expectedToken) {
+  if ((await props.params).callbackToken !== expectedToken) {
     // Log the mismatch at warn level (not error — likely a probe or spoofed request).
     console.warn(
       `[mpesa-webhook] Callback token mismatch. ` +

@@ -23,7 +23,7 @@ function handleError(error: any) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -33,7 +33,7 @@ export async function GET(
       const authErr = await requireBillingPermission(client, session, 'billing:read');
       if (authErr) return handleError(authErr);
 
-      const result = await getInvoice(client, session.tenantId, params.id);
+      const result = await getInvoice(client, session.tenantId, (await props.params).id);
       if ('code' in result) return handleError(result);
 
       return NextResponse.json({
@@ -57,7 +57,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await getSessionFromRequest(request);
@@ -71,9 +71,9 @@ export async function PATCH(
 
       let invoice;
       if (body.action === 'finalize') {
-        invoice = await finalizeInvoice(client, session.tenantId, params.id);
+        invoice = await finalizeInvoice(client, session.tenantId, (await props.params).id);
       } else if (body.action === 'void') {
-        invoice = await voidInvoice(client, session.tenantId, params.id);
+        invoice = await voidInvoice(client, session.tenantId, (await props.params).id);
       } else {
         return NextResponse.json({ error: 'Invalid action. Must be finalize or void.' }, { status: 400 });
       }

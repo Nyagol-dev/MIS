@@ -11,7 +11,8 @@
  * - Any other Node.js-only module
  *
  * The ONLY auth operation performed here is JWT signature verification,
- * using `jose` which is explicitly Edge-compatible.
+ * using `jose` which is explicitly Edge-compatible. `verifyAnySession` is
+ * a thin jose wrapper — no DB access, no pool, no Node-only APIs.
  *
  * All DB-touching operations (permission checks, user data lookups, tenant
  * resolution) happen in Route Handlers, Server Actions, and Server Components
@@ -21,14 +22,23 @@
  * MIDDLEWARE RESPONSIBILITIES
  * ─────────────────────────────────────────────────────────────────────────────
  * 1. Read the `mis_session` httpOnly cookie from the incoming request.
- * 2. Verify the JWT signature and expiry using jose.
- * 3. If invalid / missing: redirect to /login (preserving ?next= for return).
- * 4. If valid: pass through unchanged — do NOT forward session data in headers
- *    (the cookie is already readable by Server Components via `cookies()`).
+ * 2. Verify the JWT signature and expiry using verifyAnySession (jose under the
+ *    hood). verifyAnySession never throws — it returns null on any failure.
+ * 3. Cross-kind routing:
+ *    a. Tenant session on a /platform/ route → redirect to /dashboard.
+ *    b. Platform-admin session on a non-/platform/ route → redirect to
+ *       /platform/dashboard.
+ * 4. If invalid / missing: redirect to /login or /platform/login (for
+ *    /platform/ paths), preserving ?next= for post-login return.
+ * 5. If valid and no cross-kind mismatch: pass through unchanged.
  */
 
 import { type NextRequest, NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth/session";
+import {
+  verifyAnySession,
+  COOKIE_NAME,
+  type AnySessionPayload,
+} from "@/lib/auth/session";
 
 // ─── Route configuration ──────────────────────────────────────────────────────
 
@@ -40,11 +50,11 @@ import { getSessionFromRequest } from "@/lib/auth/session";
 const PUBLIC_ROUTE_PREFIXES: readonly string[] = [
   "/login",
   "/signup",
-  "/api/auth",     // login/logout API routes
+  "/api/auth",      // login/logout API routes
   "/platform/login",
   "/api/platform/login",
-  "/api/webhooks/",// webhook callbacks for payment providers
-  "/_next",        // Next.js internals (also excluded by matcher below)
+  "/api/webhooks/", // webhook callbacks for payment providers
+  "/_next",         // Next.js internals (also excluded by matcher below)
 ];
 
 /**
@@ -52,6 +62,24 @@ const PUBLIC_ROUTE_PREFIXES: readonly string[] = [
  */
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+/**
+ * Returns true if the pathname belongs to the platform-admin area.
+ * Covers both page routes (/platform/...) and API routes (/api/platform/...).
+ * Public platform routes (e.g. /platform/login, /api/platform/login) are
+ * already handled by isPublicRoute before this is ever called.
+ */
+function isPlatformRoute(pathname: string): boolean {
+  return pathname.startsWith("/platform/") || pathname.startsWith("/api/platform/");
+}
+
+/**
+ * Returns true if the pathname is an API route (starts with /api/).
+ * API routes get JSON error responses instead of redirects.
+ */
+function isApiRoute(pathname: string): boolean {
+  return pathname.startsWith("/api/");
 }
 
 // ─── Middleware handler ───────────────────────────────────────────────────────
@@ -64,18 +92,65 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Attempt to verify the session JWT from the httpOnly cookie.
-  const session = await getSessionFromRequest(request);
+  // Extract the raw JWT value from the httpOnly cookie.
+  const token: string | undefined = request.cookies.get(COOKIE_NAME)?.value;
+
+  // Attempt to verify the JWT. verifyAnySession returns null — never throws —
+  // on missing, expired, or tampered tokens.
+  const session: AnySessionPayload | null = token
+    ? await verifyAnySession(token)
+    : null;
 
   if (!session) {
-    // Unauthenticated: redirect to /login with ?next= so the login handler
-    // can redirect back to the originally-requested route after sign-in.
-    const loginUrl = new URL("/login", request.url);
+    // Unauthenticated: API routes return JSON; page routes redirect to login.
+    if (isApiRoute(pathname)) {
+      return NextResponse.json(
+        { error: { code: "UNAUTHENTICATED" } },
+        { status: 401 },
+      );
+    }
+    const loginPath: string = isPlatformRoute(pathname)
+      ? "/platform/login"
+      : "/login";
+    const loginUrl = new URL(loginPath, request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Session is valid — pass the request through unchanged.
+  // ── Cross-kind routing ────────────────────────────────────────────────────
+  //
+  // A valid session of the wrong kind for the requested area should be bounced
+  // to the correct home route rather than being denied with a login redirect.
+  // API routes return 403 JSON; page routes redirect to the caller's home area.
+  // This prevents a tenant user from accidentally landing on a 403 when they
+  // navigate to /platform/* (they just get sent to their own dashboard), and
+  // prevents a platform-admin cookie from granting access to tenant UI pages.
+
+  if (session.sessionKind === "tenant" && isPlatformRoute(pathname)) {
+    // Tenant session hitting a platform-scoped route.
+    if (isApiRoute(pathname)) {
+      return NextResponse.json(
+        { error: { code: "FORBIDDEN" } },
+        { status: 403 },
+      );
+    }
+    // Page route: redirect to tenant dashboard; do NOT forward ?next=.
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (session.sessionKind === "platform_admin" && !isPlatformRoute(pathname)) {
+    // Platform-admin session hitting a tenant-scoped route.
+    if (isApiRoute(pathname)) {
+      return NextResponse.json(
+        { error: { code: "FORBIDDEN" } },
+        { status: 403 },
+      );
+    }
+    // Page route: redirect to platform dashboard.
+    return NextResponse.redirect(new URL("/platform/dashboard", request.url));
+  }
+
+  // Session is valid and the kind matches the requested area — pass through.
   // The session cookie is readable by Server Components and Route Handlers
   // via Next.js's `cookies()` helper; no need to forward it in headers.
   return NextResponse.next();

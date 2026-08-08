@@ -33,10 +33,10 @@ export function Table<T>({
   const showPagination = pagination && pagination.totalPages > 1;
 
   return (
-    <div className={`flex flex-col w-full border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-950 shadow-sm ${className}`}>
+    <div className={`flex flex-col w-full border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-sm ${className}`}>
       <div className="overflow-x-auto w-full">
-        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-left text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-900/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-left text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <tr>
               {columns.map((col) => (
                 <th
@@ -49,12 +49,12 @@ export function Table<T>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-transparent text-slate-700 dark:text-slate-350">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-transparent text-slate-700 dark:text-slate-300">
             {data.length > 0 ? (
               data.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-colors"
+                  className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
                 >
                   {columns.map((col) => (
                     <td
@@ -95,22 +95,22 @@ export function Table<T>({
 
       {/* Pagination Footer */}
       {showPagination && pagination && (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
           <div className="flex flex-1 items-center justify-between sm:hidden">
             <button
               onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
               disabled={pagination.currentPage <= 1}
-              className="relative inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 disabled:opacity-55 disabled:pointer-events-none transition-colors"
+              className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
             >
               Previous
             </button>
-            <span className="text-sm text-slate-750 dark:text-slate-400">
+            <span className="text-sm text-slate-700 dark:text-slate-400">
               Page {pagination.currentPage} of {pagination.totalPages}
             </span>
             <button
               onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
               disabled={pagination.currentPage >= pagination.totalPages}
-              className="relative ml-3 inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900 disabled:opacity-55 disabled:pointer-events-none transition-colors"
+              className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
             >
               Next
             </button>
@@ -118,7 +118,7 @@ export function Table<T>({
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               {pagination.totalItems !== undefined && (
-                <p className="text-sm text-slate-500 dark:text-slate-450">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   Showing{' '}
                   <span className="font-semibold text-slate-800 dark:text-slate-200">
                     {Math.max(0, (pagination.currentPage - 1) * (pagination.itemsPerPage || 10) + 1)}
@@ -146,7 +146,7 @@ export function Table<T>({
                 <button
                   onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
                   disabled={pagination.currentPage <= 1}
-                  className="relative inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 p-2 text-slate-550 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 disabled:opacity-55 disabled:pointer-events-none transition-colors"
+                  className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
                   aria-label="Previous page"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -160,7 +160,7 @@ export function Table<T>({
 
                 <div className="flex items-center px-4">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Page <span className="font-semibold text-indigo-600 dark:text-indigo-400">{pagination.currentPage}</span> of{' '}
+                    Page <span className="font-semibold text-brand-600 dark:text-brand-400">{pagination.currentPage}</span> of{' '}
                     <span className="font-semibold">{pagination.totalPages}</span>
                   </span>
                 </div>
@@ -168,7 +168,7 @@ export function Table<T>({
                 <button
                   onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
                   disabled={pagination.currentPage >= pagination.totalPages}
-                  className="relative inline-flex items-center rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 p-2 text-slate-550 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 disabled:opacity-55 disabled:pointer-events-none transition-colors"
+                  className="relative inline-flex items-center rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:pointer-events-none transition-colors"
                   aria-label="Next page"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

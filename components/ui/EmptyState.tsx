@@ -17,12 +17,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center text-center p-8 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-950/20 max-w-lg mx-auto ${className}`}
+      className={`flex flex-col items-center justify-center text-center p-8 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-800/20 max-w-lg mx-auto ${className}`}
     >
-      <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-500 mb-4 border border-slate-200/50 dark:border-slate-800/50">
+      <div className="flex items-center justify-center h-12 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 mb-4 border border-slate-200 dark:border-slate-700">
         {icon || (
           <svg
-            className="h-6 w-6 stroke-1.5"
+            className="h-6 w-6"
+            style={{ strokeWidth: 1.5 }}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -39,7 +40,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
         {title}
       </h3>
-      <p className="text-sm text-slate-500 dark:text-slate-450 max-w-sm mb-6 leading-relaxed">
+      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
         {description}
       </p>
       {action && <div className="flex items-center gap-3">{action}</div>}

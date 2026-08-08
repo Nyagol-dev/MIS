@@ -27,11 +27,20 @@ export const Toast: React.FC<ToastProps> = ({
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
+  // All shades use valid Tailwind values (no -250, -450, -550, etc.)
   const bgStyles = {
-    success: 'bg-emerald-50 text-emerald-900 border-emerald-250 dark:bg-emerald-950/90 dark:text-emerald-50 dark:border-emerald-800',
-    error: 'bg-red-50 text-red-900 border-red-250 dark:bg-red-950/90 dark:text-red-50 dark:border-red-800',
-    warning: 'bg-amber-55 text-amber-900 border-amber-250 dark:bg-amber-950/90 dark:text-amber-50 dark:border-amber-800',
-    info: 'bg-slate-50 text-slate-900 border-slate-250 dark:bg-slate-900/90 dark:text-slate-50 dark:border-slate-800',
+    success:
+      'bg-emerald-50 text-emerald-900 border-emerald-200 ' +
+      'dark:bg-emerald-950/90 dark:text-emerald-50 dark:border-emerald-800',
+    error:
+      'bg-red-50 text-red-900 border-red-200 ' +
+      'dark:bg-red-950/90 dark:text-red-50 dark:border-red-800',
+    warning:
+      'bg-amber-50 text-amber-900 border-amber-200 ' +
+      'dark:bg-amber-950/90 dark:text-amber-50 dark:border-amber-800',
+    info:
+      'bg-slate-50 text-slate-900 border-slate-200 ' +
+      'dark:bg-slate-900/90 dark:text-slate-50 dark:border-slate-700',
   };
 
   const icons = {
@@ -41,7 +50,7 @@ export const Toast: React.FC<ToastProps> = ({
       </svg>
     ),
     error: (
-      <svg className="h-5 w-5 text-red-650 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <svg className="h-5 w-5 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
         <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
@@ -51,7 +60,8 @@ export const Toast: React.FC<ToastProps> = ({
       </svg>
     ),
     info: (
-      <svg className="h-5 w-5 text-indigo-600 dark:text-indigo-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      // Brand-600 for info icon — the single accent colour
+      <svg className="h-5 w-5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
@@ -59,7 +69,7 @@ export const Toast: React.FC<ToastProps> = ({
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 p-4 rounded-xl border shadow-xl max-w-sm animate-scale-up ${bgStyles[type]} ${className}`}
+      className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 p-4 rounded-lg border shadow-lg max-w-sm animate-scale-up ${bgStyles[type]} ${className}`}
       role="alert"
     >
       <div className="flex-shrink-0">{icons[type]}</div>
@@ -68,7 +78,7 @@ export const Toast: React.FC<ToastProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="flex-shrink-0 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 p-1 hover:bg-slate-100/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          className="flex-shrink-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 hover:bg-slate-100/60 dark:hover:bg-slate-800 rounded transition-colors"
           aria-label="Close notification"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">

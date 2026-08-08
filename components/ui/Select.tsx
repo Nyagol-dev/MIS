@@ -26,11 +26,17 @@ export const Select: React.FC<SelectProps> = ({
   const errorId = `${selectId}-error`;
   const helperId = `${selectId}-helper`;
 
-  const selectBaseStyles = 'block w-full appearance-none rounded-lg border px-3 py-2 pr-10 text-sm shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-900';
-  
+  const selectBaseStyles =
+    'block w-full appearance-none rounded-md border px-3 py-2 pr-10 text-sm shadow-sm ' +
+    'transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-0 ' +
+    'disabled:cursor-not-allowed disabled:opacity-50 ' +
+    'bg-white dark:bg-slate-900';
+
   const stateStyles = error
-    ? 'border-red-300 text-red-900 focus:border-red-500 focus:ring-red-500 dark:border-red-800 dark:text-red-300'
-    : 'border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:text-slate-100';
+    ? 'border-red-300 text-red-900 focus:border-red-500 focus:ring-red-500 ' +
+      'dark:border-red-700 dark:text-red-300'
+    : 'border-slate-300 text-slate-900 focus:border-brand-600 focus:ring-brand-600 ' +
+      'dark:border-slate-600 dark:text-slate-100';
 
   return (
     <div className="w-full flex flex-col gap-1.5">

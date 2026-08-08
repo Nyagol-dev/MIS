@@ -18,7 +18,12 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   const errorId = `${checkboxId}-error`;
   const helperId = `${checkboxId}-helper`;
 
-  const checkboxBaseStyles = 'h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-offset-slate-900 transition-colors duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50';
+  // Brand-600 accent for the checked state; matches Input/Select focus rings
+  const checkboxBaseStyles =
+    'h-4 w-4 rounded border-slate-300 text-brand-600 ' +
+    'focus:ring-brand-600 focus:ring-offset-0 ' +
+    'dark:border-slate-600 dark:bg-slate-900 dark:focus:ring-offset-slate-900 ' +
+    'transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50';
 
   return (
     <div className="flex flex-col gap-1">

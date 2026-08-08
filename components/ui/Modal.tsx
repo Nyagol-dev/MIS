@@ -50,10 +50,10 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   const sizeClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-5xl',
+    sm:   'max-w-sm',
+    md:   'max-w-md',
+    lg:   'max-w-lg',
+    xl:   'max-w-5xl',
     full: 'max-w-full m-4 h-[calc(100vh-2rem)]',
   };
 
@@ -66,12 +66,12 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
-        className={`w-full bg-white dark:bg-slate-950 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden max-h-[90vh] animate-scale-up ${sizeClasses[size]} ${className}`}
+        className={`w-full bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden max-h-[90vh] animate-scale-up ${sizeClasses[size]} ${className}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
           {title ? (
-            <h3 className="text-lg font-semibold text-slate-950 dark:text-white leading-6">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white leading-6">
               {title}
             </h3>
           ) : (
@@ -80,7 +80,7 @@ export const Modal: React.FC<ModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded focus:outline-none focus:ring-2 focus:ring-brand-600 dark:focus:ring-brand-400"
             aria-label="Close modal"
           >
             <svg

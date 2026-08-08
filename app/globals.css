@@ -1,19 +1,166 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ═══════════════════════════════════════════════════════════════════════════
+   MIS — Institutional Design Token System
+   Tailwind v4 @theme + raw CSS custom properties for shell components
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Palette philosophy
+   ──────────────────
+   This platform serves schools, clinics, NGOs, and civic agencies.
+   The visual tone must read as trustworthy and calm — not startup-flashy.
+
+   • Primary brand: deep navy (slate-blue family) — conveys authority & stability
+   • Accent: a single blue used ONLY for primary actions (CTAs, focus rings)
+   • Everything else: neutral slate grays
+   • NO gradients on text or decorative surfaces
+   • Restrained border-radius — institutional, not playful
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+/* ── Tailwind v4 design tokens ─────────────────────────────────────────────── */
+@theme {
+  /* Brand — deep navy scale */
+  --color-brand-950: #060d18;
+  --color-brand-900: #0d1f35;
+  --color-brand-800: #14304f;
+  --color-brand-700: #1a4169;
+  --color-brand-600: #1e50a2;   /* PRIMARY ACCENT — CTAs, focus rings ONLY */
+  --color-brand-500: #2563c4;
+  --color-brand-400: #4f83d4;
+  --color-brand-300: #7aa7e5;
+  --color-brand-200: #b0ccf2;
+  --color-brand-100: #dae8fa;
+  --color-brand-50:  #eef4fd;
+
+  /* Semantic surface tokens */
+  --color-surface:        #ffffff;
+  --color-surface-raised: #f8fafc;
+  --color-surface-subtle: #f1f5f9;
+
+  /* Typography */
+  --font-sans: 'Inter', 'Geist Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  /* Border radius — restrained, institutional */
+  --radius-sm:  0.25rem;   /* 4px  — tight, for badges & chips */
+  --radius-md:  0.375rem;  /* 6px  — inputs, selects */
+  --radius-lg:  0.5rem;    /* 8px  — cards, modals */
+  --radius-xl:  0.75rem;   /* 12px — panels, large containers */
+  --radius-full: 9999px;   /* pills only when semantically circular */
+
+  /* Animation */
+  --animate-fade-in:  fade-in 0.15s ease-out;
+  --animate-scale-up: scale-up 0.15s ease-out;
 }
 
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scale-up {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── CSS Custom Properties (used by inline-styled shell components) ─────────── */
+:root {
+  /* ── Page-level surfaces ─────────────────────────────────────── */
+  --background:   #f8fafc;
+  --foreground:   #0f172a;
+
+  /* ── Sidebar (Tenant) — dark navy regardless of page color scheme ─ */
+  --sidebar-width:        15rem;
+  --sidebar-bg:           #0d1f35;
+  --sidebar-border:       rgba(255, 255, 255, 0.08);
+  --sidebar-fg:           rgba(255, 255, 255, 0.72);
+  --sidebar-muted:        rgba(255, 255, 255, 0.38);
+  --sidebar-brand-fg:     #ffffff;
+  --sidebar-active-bg:    rgba(255, 255, 255, 0.12);
+  --sidebar-active-fg:    #ffffff;
+  --sidebar-hover:        rgba(255, 255, 255, 0.07);
+  --sidebar-logout-fg:    rgba(255, 255, 255, 0.65);
+
+  /* ── Platform Sidebar — deeper charcoal navy (admin context) ───── */
+  --platform-sidebar-bg:        #060d18;
+  --platform-sidebar-border:    rgba(255, 255, 255, 0.08);
+  --platform-sidebar-fg:        rgba(255, 255, 255, 0.65);
+  --platform-sidebar-muted:     rgba(255, 255, 255, 0.35);
+  --platform-sidebar-brand-fg:  #ffffff;
+  --platform-sidebar-active-bg: rgba(255, 255, 255, 0.12);
+  --platform-sidebar-active-fg: #ffffff;
+  --platform-sidebar-hover:     rgba(255, 255, 255, 0.06);
+  --platform-sidebar-logout-fg: rgba(255, 255, 255, 0.6);
+  --platform-badge-bg:          rgba(245, 158, 11, 0.18);
+  --platform-badge-fg:          #fcd34d;
+
+  /* ── TopBar ──────────────────────────────────────────────────── */
+  --topbar-height:        3.5rem;
+  --topbar-bg:            rgba(255, 255, 255, 0.92);
+  --topbar-border:        #e2e8f0;
+  --topbar-title-fg:      #0f172a;
+  --topbar-breadcrumb-fg: #64748b;
+  --topbar-user-fg:       #475569;
+  --topbar-muted:         #94a3b8;
+  --topbar-btn-bg:        transparent;
+  --topbar-btn-fg:        #475569;
+  --topbar-btn-border:    #cbd5e1;
+  --topbar-btn-hover-bg:  #f1f5f9;
+  --topbar-avatar-bg:     #1e50a2;
+  --topbar-avatar-fg:     #ffffff;
+
+  /* ── Auth layout ─────────────────────────────────────────────── */
+  --auth-bg:              #f1f5f9;
+  --auth-card-bg:         #ffffff;
+  --auth-card-border:     #e2e8f0;
+  --auth-card-shadow:     0 1px 3px 0 rgba(15, 23, 42, 0.06),
+                          0 4px 16px 0 rgba(15, 23, 42, 0.06);
+  --auth-accent:          #1e50a2;
+  --auth-brand-fg:        #0d1f35;
+  --auth-brand-sub-fg:    #64748b;
+}
+
+/* ── Dark mode overrides ───────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Page surfaces */
+    --background:   #09111e;
+    --foreground:   #e2e8f0;
+
+    /* TopBar */
+    --topbar-bg:            rgba(13, 31, 53, 0.92);
+    --topbar-border:        rgba(255, 255, 255, 0.08);
+    --topbar-title-fg:      #f1f5f9;
+    --topbar-breadcrumb-fg: #94a3b8;
+    --topbar-user-fg:       #cbd5e1;
+    --topbar-muted:         #64748b;
+    --topbar-btn-fg:        #94a3b8;
+    --topbar-btn-border:    rgba(255, 255, 255, 0.12);
+    --topbar-btn-hover-bg:  rgba(255, 255, 255, 0.06);
+
+    /* Auth layout */
+    --auth-bg:           #060d18;
+    --auth-card-bg:      #0d1f35;
+    --auth-card-border:  rgba(255, 255, 255, 0.08);
+    --auth-card-shadow:  0 4px 32px 0 rgba(0, 0, 0, 0.48);
+    --auth-accent:       #4f83d4;
+    --auth-brand-fg:     #f1f5f9;
+    --auth-brand-sub-fg: #94a3b8;
   }
 }
 
+/* ── Base resets ───────────────────────────────────────────────────────────── */
 html {
   height: 100%;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  html { color-scheme: dark; }
 }
 
 html,
@@ -22,21 +169,21 @@ body {
   overflow-x: hidden;
 }
 
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 * {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+}
+
+body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -44,8 +191,6 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
+/* ── Utility animations (referenced by Modal, Toast) ────────────────────────── */
+.animate-fade-in  { animation: var(--animate-fade-in); }
+.animate-scale-up { animation: var(--animate-scale-up); }

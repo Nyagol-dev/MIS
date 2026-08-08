@@ -17,10 +17,11 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     lg: 'h-12 w-12 stroke-[2.5]',
   };
 
+  // Brand-600 for primary; fixed invalid slate-650 → slate-500
   const colors = {
-    primary: 'text-indigo-600 dark:text-indigo-400',
-    white: 'text-white',
-    gray: 'text-slate-400 dark:text-slate-650',
+    primary: 'text-brand-600 dark:text-brand-400',
+    white:   'text-white',
+    gray:    'text-slate-400 dark:text-slate-500',
   };
 
   const currentSize = sizes[size] || sizes.md;

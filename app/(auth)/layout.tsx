@@ -38,6 +38,18 @@ export default function AuthLayout({
           --auth-brand-sub-fg:    #64748b;
         }
 
+        /* ── Dark-mode token overrides ───────────────────────────────── */
+        @media (prefers-color-scheme: dark) {
+          :root {
+            --auth-bg:           #0f172a;
+            --auth-card-bg:      #1e293b;
+            --auth-card-border:  #334155;
+            --auth-card-shadow:  0 4px 32px 0 rgba(0, 0, 0, 0.48);
+            --auth-brand-fg:     #f1f5f9;
+            --auth-brand-sub-fg: #94a3b8;
+          }
+        }
+
         /* ── Full-viewport centred canvas ────────────────────────────── */
         .auth-layout-root {
           min-height: 100dvh;

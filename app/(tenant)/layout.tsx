@@ -76,34 +76,35 @@ export default function TenantLayout({
     <>
       <style>{`
         /* ── Tenant shell CSS tokens ─────────────────────────────────── */
+        /* Sidebar values mirror --sidebar-* in globals.css              */
         :root {
           --sidebar-width:              15rem;
           --topbar-height:              3.5rem;
 
-          /* Sidebar */
-          --sidebar-bg:                 #0f172a;
-          --sidebar-border:             #1e293b;
-          --sidebar-fg:                 #94a3b8;
-          --sidebar-muted:              #475569;
-          --sidebar-brand-fg:           #f8fafc;
-          --sidebar-active-fg:          #f8fafc;
-          --sidebar-active-bg:          #1e293b;
-          --sidebar-hover:              rgba(255,255,255,0.06);
-          --sidebar-logout-fg:          #f87171;
+          /* Sidebar — institutional deep navy (dark regardless of page mode) */
+          --sidebar-bg:                 #0d1f35;
+          --sidebar-border:             rgba(255,255,255,0.07);
+          --sidebar-fg:                 rgba(255,255,255,0.70);
+          --sidebar-muted:              rgba(255,255,255,0.38);
+          --sidebar-brand-fg:           #ffffff;
+          --sidebar-active-fg:          #ffffff;
+          --sidebar-active-bg:          rgba(255,255,255,0.12);
+          --sidebar-hover:              rgba(255,255,255,0.07);
+          --sidebar-logout-fg:          rgba(255,255,255,0.60);
 
           /* Top bar */
-          --topbar-bg:                  rgba(255,255,255,0.85);
+          --topbar-bg:                  rgba(255,255,255,0.92);
           --topbar-border:              #e2e8f0;
           --topbar-title-fg:            #0f172a;
           --topbar-breadcrumb-fg:       #64748b;
-          --topbar-user-fg:             #334155;
+          --topbar-user-fg:             #475569;
           --topbar-muted:               #94a3b8;
-          --topbar-avatar-bg:           #e0f2fe;
-          --topbar-avatar-fg:           #0369a1;
-          --topbar-btn-bg:              #ffffff;
-          --topbar-btn-border:          #e2e8f0;
-          --topbar-btn-fg:              #374151;
-          --topbar-btn-hover-bg:        #f8fafc;
+          --topbar-avatar-bg:           #1e50a2;
+          --topbar-avatar-fg:           #ffffff;
+          --topbar-btn-bg:              transparent;
+          --topbar-btn-border:          #cbd5e1;
+          --topbar-btn-fg:              #475569;
+          --topbar-btn-hover-bg:        #f1f5f9;
         }
 
         /* ── Shell layout ─────────────────────────────────────────────── */

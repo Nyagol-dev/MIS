@@ -71,7 +71,7 @@ export function PlatformLoginForm() {
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      <Button type="submit" className="w-full" variant="secondary" isLoading={isLoading}>
+      <Button type="submit" className="w-full" variant="primary" isLoading={isLoading}>
         Platform Login
       </Button>
     </form>

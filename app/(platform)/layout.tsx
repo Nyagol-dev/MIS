@@ -62,39 +62,41 @@ export default function PlatformLayout({
   return (
     <>
       <style>{`
-        /* ── Platform shell CSS tokens ───────────────────────────────── */
+        /* ── Platform shell CSS tokens ────────────────────────────────── */
+        /* Platform sidebar is deeper charcoal-navy than tenant sidebar,   */
+        /* making the two admin contexts immediately visually distinct.     */
         :root {
           --sidebar-width:                   15rem;
           --topbar-height:                   3.5rem;
 
-          /* Platform sidebar — distinct purple/indigo palette */
-          --platform-sidebar-bg:             #1e1b4b;
-          --platform-sidebar-border:         #312e81;
-          --platform-sidebar-fg:             #a5b4fc;
-          --platform-sidebar-muted:          #6d6d9e;
-          --platform-sidebar-brand-fg:       #f5f3ff;
-          --platform-sidebar-active-fg:      #f5f3ff;
-          --platform-sidebar-active-bg:      #312e81;
-          --platform-sidebar-hover:          rgba(255,255,255,0.07);
-          --platform-sidebar-logout-fg:      #f87171;
+          /* Platform sidebar — deeper charcoal-navy (admin context) */
+          --platform-sidebar-bg:             #060d18;
+          --platform-sidebar-border:         rgba(255,255,255,0.07);
+          --platform-sidebar-fg:             rgba(255,255,255,0.65);
+          --platform-sidebar-muted:          rgba(255,255,255,0.35);
+          --platform-sidebar-brand-fg:       #ffffff;
+          --platform-sidebar-active-fg:      #ffffff;
+          --platform-sidebar-active-bg:      rgba(255,255,255,0.12);
+          --platform-sidebar-hover:          rgba(255,255,255,0.06);
+          --platform-sidebar-logout-fg:      rgba(255,255,255,0.60);
 
-          /* Platform badge */
-          --platform-badge-bg:               rgba(139,92,246,0.2);
-          --platform-badge-fg:               #c4b5fd;
+          /* Platform admin badge — warm amber distinguishes admin context */
+          --platform-badge-bg:               rgba(245,158,11,0.18);
+          --platform-badge-fg:               #fcd34d;
 
-          /* Top bar (same tokens, reused from tenant shell) */
-          --topbar-bg:                       rgba(255,255,255,0.85);
+          /* Top bar */
+          --topbar-bg:                       rgba(255,255,255,0.92);
           --topbar-border:                   #e2e8f0;
           --topbar-title-fg:                 #0f172a;
           --topbar-breadcrumb-fg:            #64748b;
-          --topbar-user-fg:                  #334155;
+          --topbar-user-fg:                  #475569;
           --topbar-muted:                    #94a3b8;
-          --topbar-avatar-bg:                #ede9fe;
-          --topbar-avatar-fg:                #7c3aed;
-          --topbar-btn-bg:                   #ffffff;
-          --topbar-btn-border:               #e2e8f0;
-          --topbar-btn-fg:                   #374151;
-          --topbar-btn-hover-bg:             #f8fafc;
+          --topbar-avatar-bg:                #1e50a2;
+          --topbar-avatar-fg:                #ffffff;
+          --topbar-btn-bg:                   transparent;
+          --topbar-btn-border:               #cbd5e1;
+          --topbar-btn-fg:                   #475569;
+          --topbar-btn-hover-bg:             #f1f5f9;
         }
 
         /* ── Shell layout ─────────────────────────────────────────────── */
@@ -109,7 +111,7 @@ export default function PlatformLayout({
           display: flex;
           flex-direction: column;
           min-height: 100dvh;
-          background: #f5f3ff;
+          background: #f8fafc;
         }
 
         .platform-content {

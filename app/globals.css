@@ -17,8 +17,6 @@
    • Restrained border-radius — institutional, not playful
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Google Fonts ──────────────────────────────────────────────────────────── */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 /* ── Tailwind v4 design tokens ─────────────────────────────────────────────── */
 @theme {
@@ -41,7 +39,7 @@
   --color-surface-subtle: #f1f5f9;
 
   /* Typography */
-  --font-sans: 'Inter', 'Geist Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Code', monospace;
 
   /* Border radius — restrained, institutional */

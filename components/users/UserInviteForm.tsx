@@ -15,6 +15,8 @@ export function UserInviteForm({ roles }: UserInviteFormProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [setupUrl, setSetupUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [email, setEmail] = useState('');
@@ -37,18 +39,15 @@ export function UserInviteForm({ roles }: UserInviteFormProps) {
         }),
       });
 
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || 'Failed to invite user');
       }
 
-      setIsOpen(false);
-      setEmail('');
-      setFullName('');
-      setSelectedRoles([]);
+      setSetupUrl(`${window.location.origin}${data.setupPath}`);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -72,7 +71,32 @@ export function UserInviteForm({ roles }: UserInviteFormProps) {
         title="Invite New User"
         size="md"
       >
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+        {setupUrl ? (
+          <div className="mt-2 space-y-4">
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+              The account is ready. Share this one-time setup link with the invitee using a private channel. It expires in 24 hours.
+            </div>
+            <Input label="One-time setup link" id="user-setup-link" type="url" value={setupUrl} readOnly />
+            <div className="flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+              <Button type="button" variant="outline" onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(setupUrl);
+                  setCopied(true);
+                } catch {
+                  setCopied(false);
+                }
+              }}>{copied ? 'Copied' : 'Copy link'}</Button>
+              <Button type="button" onClick={() => {
+                setIsOpen(false);
+                setSetupUrl(null);
+                setCopied(false);
+                setEmail('');
+                setFullName('');
+                setSelectedRoles([]);
+              }}>Done</Button>
+            </div>
+          </div>
+        ) : <form onSubmit={handleSubmit} className="mt-2 space-y-4">
           {error && (
             <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg dark:bg-red-900/20 dark:text-red-400">
               {error}
@@ -127,7 +151,7 @@ export function UserInviteForm({ roles }: UserInviteFormProps) {
               {isSubmitting ? 'Inviting...' : 'Send Invite'}
             </Button>
           </div>
-        </form>
+        </form>}
       </Modal>
     </>
   );

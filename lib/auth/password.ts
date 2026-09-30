@@ -5,12 +5,11 @@
  *
  * NULLABLE password_hash COLUMN
  * ─────────────────────────────────────────────────────────────────────────────
- * The `users.password_hash` column is TEXT and nullable (NULL for SSO-only
- * users). A NULL value does NOT mean "no password set, allow anything" — it
- * means the user account is SSO-only and MUST NOT accept password login
- * attempts. verifyPassword() enforces this by throwing SsoOnlyUserError
- * when hash is null, rather than returning false, so callers are forced
- * to handle the SSO case explicitly rather than silently falling through.
+ * The `users.password_hash` column is TEXT and nullable. NULL means the
+ * account has no password credential yet (for example, before invitation
+ * activation); it never permits password login. SSO is not configured here.
+ * verifyPassword() rejects null hashes explicitly instead of silently
+ * falling through to a password comparison.
  */
 
 import argon2 from "argon2";
@@ -18,11 +17,10 @@ import argon2 from "argon2";
 // ─── Error types ──────────────────────────────────────────────────────────────
 
 /**
- * Thrown by verifyPassword when the stored hash is null, indicating the user
- * account is SSO-only and password login is not permitted.
+ * Thrown by verifyPassword when the stored hash is null, indicating password
+ * login is not configured for the account.
  *
- * Callers should return an HTTP 403 or a user-facing message like:
- * "This account uses SSO. Please sign in with your identity provider."
+ * Callers should return a generic password-authentication failure.
  */
 export class SsoOnlyUserError extends Error {
   public readonly code = "SSO_ONLY_USER" as const;
@@ -30,8 +28,8 @@ export class SsoOnlyUserError extends Error {
   constructor(userId?: string) {
     super(
       userId
-        ? `User ${userId} is SSO-only and cannot log in with a password.`
-        : "This account is SSO-only and cannot log in with a password."
+        ? `User ${userId} has no password credential and cannot log in with a password.`
+        : "This account has no password credential and cannot log in with a password."
     );
     this.name = "SsoOnlyUserError";
   }
@@ -83,8 +81,7 @@ export async function hashPassword(plaintext: string): Promise<string> {
  *                     MUST be passed as-is — do NOT coerce null to empty string.
  * @param plaintext  - The raw password supplied by the user.
  * @returns `true` if the password matches, `false` if it does not.
- * @throws {SsoOnlyUserError} If storedHash is null — the account is SSO-only
- *                            and password login must be rejected.
+ * @throws {SsoOnlyUserError} If storedHash is null — password login must be rejected.
  */
 export async function verifyPassword(
   storedHash: string | null,

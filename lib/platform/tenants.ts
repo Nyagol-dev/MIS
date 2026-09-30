@@ -34,9 +34,10 @@
  */
 
 import { requirePlatformAdminSession } from "@/lib/auth/platformAdmin";
-import { getPlatformAdminPool, ForbiddenError } from "@/lib/auth/permissions";
-import { writePlatformAuditLog } from "@/lib/db/audit";
+import { getPlatformAdminPool } from "@/lib/auth/permissions";
+import { writeAuditLog, writePlatformAuditLog } from "@/lib/db/audit";
 import type { AnySessionPayload } from "@/lib/auth/session";
+import { createCredentialSetupToken } from "@/lib/auth/credentialSetup";
 
 // ─── Row type ────────────────────────────────────────────────────────────────
 
@@ -65,7 +66,12 @@ export interface TenantNotFoundError {
   tenantId: string;
 }
 
-export type CreateTenantResult = OrganizationRow | SlugCollisionError;
+export interface CreatedTenantWorkspace {
+  organization: OrganizationRow;
+  firstAdminSetupPath: string;
+}
+
+export type CreateTenantResult = CreatedTenantWorkspace | SlugCollisionError;
 export type DeactivateTenantResult = void | TenantNotFoundError;
 
 // ─── Type guards ──────────────────────────────────────────────────────────────
@@ -95,6 +101,7 @@ export interface CreateTenantParams {
   slug: string;
   name: string;
   orgTypeId: string; // Corresponds to org_types.slug (the PK of org_types)
+  initialAdmin: { email: string; displayName: string };
 }
 
 /**
@@ -162,7 +169,57 @@ export async function createTenant(
       throw err;
     }
 
-    // ── Step 3: audit log — same client, same transaction ────────────────────
+    // ── Step 3: bootstrap the first workspace administrator ──────────────────
+    const { rows: roleRows } = await client.query<{ id: string }>(
+      `INSERT INTO roles (tenant_id, name, description, is_system)
+       VALUES ($1, 'Workspace administrator', 'Initial administrator role for this workspace.', TRUE)
+       RETURNING id`,
+      [row.id]
+    );
+    const roleId = roleRows[0].id;
+    const { rows: userRows } = await client.query<{ id: string }>(
+      `INSERT INTO users (tenant_id, email, display_name)
+       VALUES ($1, $2, $3)
+       RETURNING id`,
+      [row.id, params.initialAdmin.email, params.initialAdmin.displayName]
+    );
+    const userId = userRows[0].id;
+    const { rowCount: permissionCount } = await client.query(
+      `INSERT INTO role_permissions (tenant_id, role_id, permission_id)
+       SELECT $1, $2, p.id
+         FROM permissions AS p
+        WHERE p.codename IN ('user:manage', 'tenant:admin')
+       ON CONFLICT DO NOTHING`,
+      [row.id, roleId]
+    );
+    if (permissionCount !== 2) {
+      throw new Error("Core workspace permissions are missing. Apply all database migrations before creating an organisation.");
+    }
+    await client.query(
+      `INSERT INTO user_roles (tenant_id, user_id, role_id, assigned_by)
+       VALUES ($1, $2, $3, NULL)`,
+      [row.id, userId, roleId]
+    );
+
+    const { token, tokenHash } = createCredentialSetupToken();
+    await client.query(
+      `INSERT INTO user_password_setup_tokens
+         (tenant_id, user_id, token_hash, created_by, expires_at)
+       VALUES ($1, $2, $3, NULL, now() + interval '24 hours')`,
+      [row.id, userId, tokenHash]
+    );
+    await writeAuditLog(client, {
+      tenantId: row.id,
+      actorId: null,
+      action: "user.invited",
+      entityType: "user",
+      entityId: userId,
+      oldState: null,
+      newState: { id: userId, email: params.initialAdmin.email, display_name: params.initialAdmin.displayName, is_active: true },
+      context: { bootstrap: true, created_by_platform_admin: platformAdminId, roleIds: [roleId] },
+    });
+
+    // ── Step 4: audit log — same client, same transaction ────────────────────
     await writePlatformAuditLog(client, {
       platformAdminId,
       action: "tenant.created",
@@ -179,11 +236,12 @@ export async function createTenant(
       context: {
         slug,
         org_type: orgTypeId,
+        initial_admin_id: userId,
       },
     });
 
     await client.query("COMMIT");
-    return row;
+    return { organization: row, firstAdminSetupPath: `/accept-invite?token=${token}` };
   } catch (err) {
     // Safety net: roll back if an unexpected error escaped the inner try.
     try {

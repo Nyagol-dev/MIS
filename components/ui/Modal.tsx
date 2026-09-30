@@ -31,7 +31,7 @@ export const Modal: React.FC<ModalProps> = ({
 
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKemujemakwaniyDown);
+      window.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {

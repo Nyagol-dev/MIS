@@ -6,6 +6,7 @@ import { getEffectivePermissions, canOnEntityType } from '@/lib/auth/permissions
 import { listEntityTypes } from '@/lib/entities/types';
 import { withTenantContext } from '@/lib/db/withTenant';
 import { EntityTypeList } from '@/components/entities/EntityTypeList';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const metadata = {
   title: 'Entity Types',
@@ -31,16 +32,8 @@ export default async function EntitiesPage() {
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Entities
-        </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Manage your organizational data records. Select an entity type to view or edit its records.
-        </p>
-      </div>
-
+    <div className="mx-auto max-w-7xl">
+      <PageHeader eyebrow="Workspace data" title="Records" description="Choose a record type to browse and manage the information your organisation keeps." />
       <EntityTypeList entityTypes={allowedEntityTypes} basePath="/entities" />
     </div>
   );

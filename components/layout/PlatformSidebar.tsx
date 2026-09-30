@@ -182,7 +182,9 @@ export default function PlatformSidebar({
   navItems,
   adminEmail,
 }: PlatformSidebarProps) {
+  const pathname = usePathname();
   return (
+    <>
     <aside
       id="platform-sidebar"
       aria-label="Platform admin navigation"
@@ -261,5 +263,16 @@ export default function PlatformSidebar({
       {/* Footer */}
       <LogoutButton adminEmail={adminEmail} />
     </aside>
+    <nav className="mobile-sidebar-nav platform-mobile-nav" aria-label="Platform navigation">
+      {navItems.map((item) => {
+        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+        const shortLabel = item.label === "Dashboard" ? "Home" : item.label;
+        return <a key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={active ? "mobile-sidebar-link is-active" : "mobile-sidebar-link"}>
+          <Icon path={item.iconPath ?? DEFAULT_ICON} />
+          <span>{shortLabel}</span>
+        </a>;
+      })}
+    </nav>
+    </>
   );
 }

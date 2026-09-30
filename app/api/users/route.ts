@@ -3,6 +3,7 @@ import { getSessionFromRequest } from '@/lib/auth/session';
 import { withTenantContext } from '@/lib/db/withTenant';
 import { requireTenantAdmin } from '@/lib/auth/requireTenantAdmin';
 import { listUsers, inviteUser } from '@/lib/users/users';
+import { createCredentialSetupToken } from '@/lib/auth/credentialSetup';
 
 function handleError(error: any) {
   const code = error.code || error.name || error.status;
@@ -74,14 +75,40 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    }
+
+    const input = body as { email?: unknown; fullName?: unknown; roleIds?: unknown };
+    const email = typeof input?.email === 'string' ? input.email.trim().toLowerCase() : '';
+    const fullName = typeof input?.fullName === 'string' ? input.fullName.trim() : '';
+    const roleIds = input?.roleIds === undefined ? [] : input.roleIds;
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 ||
+      fullName.length < 1 || fullName.length > 120 ||
+      !Array.isArray(roleIds) || roleIds.length > 50 ||
+      roleIds.some((id) => typeof id !== 'string' || !/^[0-9a-f-]{36}$/i.test(id))
+    ) {
+      return NextResponse.json({ error: 'Enter a valid name and email, and choose valid roles.' }, { status: 400 });
+    }
 
     return await withTenantContext(session.tenantId, async (client) => {
       const authErr = await requireTenantAdmin(client, session);
       if (authErr) return handleError(authErr);
 
-      const user = await inviteUser(client, session.tenantId, body);
-      return NextResponse.json(user, { status: 201 });
+      const user = await inviteUser(client, session.tenantId, { email, fullName, roleIds }, session.userId);
+      const { token, tokenHash } = createCredentialSetupToken();
+      await client.query(
+        `INSERT INTO user_password_setup_tokens
+           (tenant_id, user_id, token_hash, created_by, expires_at)
+         VALUES ($1, $2, $3, $4, now() + interval '24 hours')`,
+        [session.tenantId, user.id, tokenHash, session.userId]
+      );
+      const { password_hash: _passwordHash, ...safeUser } = user;
+      return NextResponse.json({ user: safeUser, setupPath: `/accept-invite?token=${token}` }, { status: 201 });
     });
   } catch (error) {
     return handleError(error);

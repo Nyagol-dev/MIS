@@ -1,60 +1,113 @@
-# MIS (Management Information System)
+# Nexus MIS
 
-A multi-tenant Software-as-a-Service (SaaS) platform built with the Next.js App Router, providing dynamic entity management, role-based access control (RBAC), and specialized administration interfaces.
+Nexus MIS is a multi-tenant management system built with Next.js, TypeScript,
+PostgreSQL row-level security, role-based permissions, and separate workspace
+and platform-admin areas.
 
-## Features
+## Run locally
 
-- **Multi-Tenant Architecture**: Supports isolated tenant environments with dedicated roles and capabilities.
-- **Dynamic Entity Management**: Configurable CRUD operations for flexible data entities, dynamically rendered via API routes and React Server Components.
-- **Role-Based Access Control (RBAC)**: Secure access control supporting Platform Administrators and Tenant Users with edge-compatible middleware session verification.
-- **Specialized Interfaces**: Distinct application areas and route groups for Authentication, Platform Admin interfaces, and Tenant Management.
-- **Payment Integrations**: Built-in support for Stripe and scheduled M-Pesa transactions polling.
-- **Robust Security**: Password hashing via `argon2`, secure stateless JWT sessions using `jose`, and strict authorization layout guards.
+### 1. Install prerequisites
 
-## Tech Stack
+- Node.js 20 or newer
+- PostgreSQL 15 or newer
+- A database administrator account able to create the `mis_app` and
+  `mis_admin` roles
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Database**: PostgreSQL (`pg`)
-- **Styling**: Tailwind CSS / React Server Components
-- **Authentication**: Custom JWT implementation (`jose`), `argon2`
-- **Integrations**: Stripe SDK, M-Pesa APIs
-
-## Getting Started
-
-### Prerequisites
-
-Ensure you have Node.js (v20+) and access to a PostgreSQL database instance.
-
-### Installation
-
-1. Clone the repository and install dependencies:
+Install packages:
 
 ```bash
 npm install
 ```
 
-2. Set up your environment variables. Ensure you have the required connection strings, JWT secrets, and API keys (Stripe, M-Pesa):
+### 2. Create the database roles and database
 
-```env
-DATABASE_URL=postgres://user:password@localhost:5432/mis
-JWT_SECRET=your_super_secret_key
-# Add other necessary keys like STRIPE_SECRET_KEY, MPESA_CONSUMER_KEY, etc.
+Use your PostgreSQL administrator account. Choose unique random passwords and
+keep them private:
+
+```sql
+CREATE ROLE mis_admin LOGIN BYPASSRLS PASSWORD 'replace-with-a-random-admin-password';
+CREATE ROLE mis_app LOGIN NOBYPASSRLS PASSWORD 'replace-with-a-different-random-app-password';
+CREATE DATABASE mis OWNER mis_admin;
 ```
 
-3. Start the development server:
+Run the canonical base schema and then the migrations, in order, as `mis_admin`:
+
+```bash
+psql "postgresql://mis_admin:YOUR_ADMIN_PASSWORD@localhost:5432/mis" -v ON_ERROR_STOP=1 -f db/schema.sql
+psql "postgresql://mis_admin:YOUR_ADMIN_PASSWORD@localhost:5432/mis" -v ON_ERROR_STOP=1 -f db/migrations/round3_event_log_update_policy.sql
+psql "postgresql://mis_admin:YOUR_ADMIN_PASSWORD@localhost:5432/mis" -v ON_ERROR_STOP=1 -f db/migrations/round4_reporting_tables.sql
+psql "postgresql://mis_admin:YOUR_ADMIN_PASSWORD@localhost:5432/mis" -v ON_ERROR_STOP=1 -f db/migrations/round6_platform_admin_layer.sql
+psql "postgresql://mis_admin:YOUR_ADMIN_PASSWORD@localhost:5432/mis" -v ON_ERROR_STOP=1 -f db/migrations/round8_billing_tables.sql
+psql "postgresql://mis_admin:YOUR_ADMIN_PASSWORD@localhost:5432/mis" -v ON_ERROR_STOP=1 -f db/migrations/round9_auth_credentials.sql
+psql "postgresql://mis_admin:YOUR_ADMIN_PASSWORD@localhost:5432/mis" -v ON_ERROR_STOP=1 -f db/migrations/round10_app_role_grants.sql
+```
+
+The application role is deliberately `NOBYPASSRLS`. The administrative role is
+used only for platform administration and resolving a public organization slug
+during tenant sign-in. Do not use `mis_admin` for ordinary tenant queries.
+
+### 3. Configure secrets and connection strings
+
+Copy `.env.example` to `.env.local`. Set distinct database passwords and generate
+fresh secrets; never reuse the sample values. Generate a session secret and a
+billing encryption key with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Use one generated value for `SESSION_SECRET`, another for
+`BILLING_ENCRYPTION_KEY`, and another for `CRON_SECRET`. Local PostgreSQL may use
+`PGSSLMODE=disable`; production must keep certificate validation enabled and
+use TLS connection strings. SSO is not configured in this repository; password
+sign-in and one-time password setup links are supported.
+
+### 4. Create the first platform administrator
+
+After applying the migrations and setting `.env.local`, run:
+
+```bash
+npm run bootstrap:platform-admin
+```
+
+The command is limited to an empty platform-admin table and prompts for the
+first administrator's details and password. It does not print the password.
+Later administrators are created from Platform → Administrators and receive a
+single-use setup link.
+
+### 5. Start the app
 
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). A platform administrator
+can create an organisation and its first workspace administrator. The workspace
+administrator follows the one-time setup link, then can invite other users the
+same way. Setup links are stored only as token digests and expire after 24 hours.
 
-## Project Structure
+## Useful commands
 
-- `app/(auth)/*`: Authentication and login flows.
-- `app/(platform)/*`: Platform administration pages and dashboards.
-- `app/(tenant)/*`: Tenant-specific management, including dynamic entities (`entities/[entityTypeSlug]/[recordId]`).
-- `app/api/*`: API routes for authentication, entity CRUD operations, and CRON jobs (e.g., M-Pesa polling).
-- `components/ui/*`: Reusable, dependency-free presentation UI primitive components.
-- `lib/db/pool.ts`: PostgreSQL connection pool management.
+```bash
+npm run build
+npm run lint
+npm audit
+```
+
+## Main areas
+
+- `app/(auth)` — workspace and platform sign-in and password setup
+- `app/(tenant)` — workspace dashboards, people, roles, and records
+- `app/(platform)` — organisation and platform-admin management
+- `app/api` — authenticated APIs and payment/cron integrations
+- `db/schema.sql` — executable base schema extracted from the canonical schema
+- `db/migrations` — subsequent schema changes
+
+## Authentication notes
+
+Tenant login uses an organisation slug, email, and password. Newly created
+workspace users and platform administrators receive a random, one-time setup
+link instead of a shared temporary password. This installation does not send
+email: the authorized administrator must share the link through a private
+channel. Configure a mail provider before using invitations in a deployment
+that requires automatic delivery.

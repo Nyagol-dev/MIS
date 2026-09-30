@@ -19,7 +19,7 @@
  * Composite PK: (tenant_id, id)
  *
  * password_hash semantics:
- *   NULL  → no password set; user authenticates via SSO only (the "SSO-first" invariant).
+ *   NULL  → no password credential yet; password login is rejected until setup completes.
  *   Non-null string → bcrypt/argon2 hash set for password-based auth.
  *   NEVER store an empty string or placeholder — use NULL exclusively.
  */
@@ -29,7 +29,7 @@ export interface UserRow {
   email: string;
   /** Column name in schema is `display_name`. Aliased here for clarity. */
   display_name: string;
-  /** NULL = no password set (SSO-only). See password_hash semantics above. */
+  /** NULL = no password credential is active yet. See password_hash semantics above. */
   password_hash: string | null;
   is_active: boolean;
   metadata: Record<string, unknown>;

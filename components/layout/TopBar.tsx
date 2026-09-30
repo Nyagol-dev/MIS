@@ -12,7 +12,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +72,12 @@ export default function TopBar({
 }: TopBarProps) {
   const [loggingOut, setLoggingOut] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const sectionTitles: Record<string, string> = {
+    "/dashboard": "Workspace", "/users": "People", "/roles": "Roles & permissions",
+    "/entities": "Records", "/platform/dashboard": "Platform overview",
+    "/platform/tenants": "Organisations", "/platform/admins": "Administrators",
+  };
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -151,7 +157,7 @@ export default function TopBar({
           </span>
         ))}
 
-        <h1
+        <div
           style={{
             margin: 0,
             fontSize: "0.9375rem",
@@ -162,8 +168,8 @@ export default function TopBar({
             whiteSpace: "nowrap",
           }}
         >
-          {pageTitle}
-        </h1>
+          {sectionTitles[pathname] ?? pageTitle}
+        </div>
       </div>
 
       {/* Right: user display name + logout */}

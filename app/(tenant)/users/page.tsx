@@ -8,6 +8,7 @@ import { listRoles } from '@/lib/roles/roles';
 import { withTenantContext } from '@/lib/db/withTenant';
 import { UserTable } from '@/components/users/UserTable';
 import { UserInviteForm } from '@/components/users/UserInviteForm';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export const metadata = {
   title: 'Users',
@@ -55,24 +56,8 @@ export default async function UsersPage(props: { searchParams: Promise<Record<st
   const totalPages = Math.ceil(usersData.total / limit);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Users
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Manage users in your organization.
-          </p>
-        </div>
-        
-        {canManageUsers && (
-          <div>
-            <UserInviteForm roles={rolesData.items.map(r => ({ id: r.id, name: r.name }))} />
-          </div>
-        )}
-      </div>
-
+    <div className="mx-auto max-w-7xl">
+      <PageHeader eyebrow="Workspace people" title="People" description="Manage the people who can access this workspace." actions={canManageUsers ? <UserInviteForm roles={rolesData.items.map(r => ({ id: r.id, name: r.name }))} /> : undefined} />
       <UserTable 
         users={usersData.items} 
         currentPage={page} 

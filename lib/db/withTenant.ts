@@ -3,7 +3,7 @@
  *
  * WHY THIS WRAPPER EXISTS
  * ─────────────────────────────────────────────────────────────────────────────
- * The schema uses `SET LOCAL app.current_tenant_id = '<uuid>'` to tell
+ * The schema uses a transaction-local `app.current_tenant_id` setting to tell
  * PostgreSQL's RLS policies which tenant the current request belongs to.
  * `SET LOCAL` only lives for the duration of the enclosing transaction — once
  * the transaction ends the setting is gone.
@@ -16,7 +16,7 @@
  * The lifecycle enforced here:
  *   1. Checkout a client from appPool
  *   2. BEGIN (explicit transaction — required for SET LOCAL)
- *   3. SET LOCAL app.current_tenant_id = $1  (parameterized — never interpolated)
+ *   3. set_config(..., $1, true) (parameterized and transaction-local)
  *   4. Run caller's fn(client)
  *   5. COMMIT on success
  *   6. ROLLBACK on any throw
@@ -41,7 +41,7 @@ import { appPool } from "./pool";
 /**
  * Executes `fn` inside a transaction scoped to the given tenant.
  *
- * `SET LOCAL app.current_tenant_id` is set immediately after BEGIN so that
+ * `app.current_tenant_id` is set transaction-locally immediately after BEGIN so that
  * every query inside `fn` sees the correct RLS context. The client is always
  * released back to the pool in the `finally` block, regardless of success or
  * failure, so the pool is never leaked.
@@ -79,7 +79,10 @@ export async function withTenantContext<T>(
     // PostgreSQL's SET statement accepts parameters in the extended query
     // protocol, which is what `pg` uses for any query() call with a values
     // array.
-    await client.query("SET LOCAL app.current_tenant_id = $1", [tenantId]);
+    // SET LOCAL doesn't support bind parameters in PostgreSQL's utility
+    // statement grammar. set_config() does, so the tenant ID remains a true
+    // wire-protocol parameter while retaining transaction-local scope.
+    await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [tenantId]);
 
     const result = await fn(client);
 
@@ -104,4 +107,3 @@ export async function withTenantContext<T>(
     client.release();
   }
 }
-

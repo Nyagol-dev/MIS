@@ -13,8 +13,8 @@
  *   app.current_tenant_id is ever issued. Platform-admin operations have no
  *   tenant context.
  *
- * • password_hash is always NULL for new platform admins (SSO-first invariant,
- *   matching the same rule applied to tenant users in lib/users/users.ts).
+ * • password_hash starts NULL for new platform admins and is set only when
+ *   their one-time password setup token is redeemed.
  *
  * • Errors for EXPECTED failure modes are returned as typed objects with a
  *   `code` property — never thrown as raw Errors.
@@ -28,7 +28,7 @@
  *     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  *     email         TEXT NOT NULL UNIQUE,
  *     display_name  TEXT NOT NULL,
- *     password_hash TEXT,               -- NULL for SSO-only platform admins
+ *     password_hash TEXT,               -- NULL until password setup is completed
  *     is_active     BOOLEAN NOT NULL DEFAULT TRUE,
  *     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
  *     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -36,9 +36,10 @@
  */
 
 import { requirePlatformAdminSession } from "@/lib/auth/platformAdmin";
-import { getPlatformAdminPool, ForbiddenError } from "@/lib/auth/permissions";
+import { getPlatformAdminPool } from "@/lib/auth/permissions";
 import { writePlatformAuditLog } from "@/lib/db/audit";
 import type { AnySessionPayload } from "@/lib/auth/session";
+import { createCredentialSetupToken } from "@/lib/auth/credentialSetup";
 
 // ─── Row type ────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,11 @@ export interface EmailCollisionError {
   email: string;
 }
 
+export interface CreatedPlatformAdmin {
+  admin: SafePlatformAdminRow;
+  setupPath: string;
+}
+
 export interface CannotDeactivateSelfError {
   code: "CANNOT_DEACTIVATE_SELF";
   message: string;
@@ -78,7 +84,7 @@ export interface PlatformAdminNotFoundError {
   platformAdminId: string;
 }
 
-export type CreatePlatformAdminResult = SafePlatformAdminRow | EmailCollisionError;
+export type CreatePlatformAdminResult = CreatedPlatformAdmin | EmailCollisionError;
 export type DeactivatePlatformAdminResult =
   | void
   | CannotDeactivateSelfError
@@ -125,6 +131,7 @@ const PG_UNIQUE_VIOLATION = "23505";
  */
 function toSafeRow(row: PlatformAdminRow): SafePlatformAdminRow {
   const { password_hash: _omitted, ...safe } = row;
+  void _omitted;
   return safe;
 }
 
@@ -138,16 +145,14 @@ export interface CreatePlatformAdminParams {
 /**
  * Creates a new platform_admins row.
  *
- * password_hash is explicitly omitted from the INSERT so Postgres writes NULL
- * (the SSO-first invariant, identical to how tenant users are created in
- * lib/users/users.ts). The platform admin must authenticate via SSO until
- * a password is explicitly set through a separate, audited flow.
+ * password_hash is initially NULL. A random one-time setup token is stored as
+ * a digest in the same transaction and returned once as a relative link.
  *
  * Audit log written on the same client within the same transaction.
  *
  * @param session - A verified AnySessionPayload (must be platform_admin kind).
  * @param params  - { email, displayName }
- * @returns SafePlatformAdminRow on success, or EmailCollisionError if the
+ * @returns An admin row and one-time setup link, or EmailCollisionError if the
  *          email is already registered to another platform admin.
  * @throws {ForbiddenError} If the session is not a platform_admin session, or
  *                          the admin is inactive in the database.
@@ -168,7 +173,7 @@ export async function createPlatformAdmin(
 
     // ── Step 2: insert platform_admins row ────────────────────────────────────
     // password_hash is intentionally absent from the column list — Postgres
-    // writes NULL via the column default, preserving the SSO-first invariant.
+    // writes NULL via the column default; the invite token activates the password later.
     let row: PlatformAdminRow;
     try {
       const { rows } = await client.query<PlatformAdminRow>(
@@ -202,6 +207,14 @@ export async function createPlatformAdmin(
       throw err;
     }
 
+    const { token, tokenHash } = createCredentialSetupToken();
+    await client.query(
+      `INSERT INTO platform_admin_password_setup_tokens
+         (platform_admin_id, token_hash, created_by, expires_at)
+       VALUES ($1, $2, $3, now() + interval '24 hours')`,
+      [row.id, tokenHash, platformAdminId]
+    );
+
     // ── Step 3: audit log — same client, same transaction ────────────────────
     await writePlatformAuditLog(client, {
       platformAdminId,
@@ -221,7 +234,7 @@ export async function createPlatformAdmin(
     });
 
     await client.query("COMMIT");
-    return toSafeRow(row);
+    return { admin: toSafeRow(row), setupPath: `/accept-invite?token=${token}` };
   } catch (err) {
     try {
       await client.query("ROLLBACK");

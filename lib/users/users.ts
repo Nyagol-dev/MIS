@@ -9,8 +9,8 @@
  *   They do NOT open their own connections or transactions. The caller owns the
  *   transaction lifecycle (BEGIN / COMMIT / ROLLBACK).
  *
- * • password_hash is always NULL for new users ("SSO-first" invariant).
- *   NULL means "no password set yet", never an empty string or placeholder.
+ * • New users begin without a password. An expiring, one-time setup link lets
+ *   the invitee establish one; SSO can also be layered on separately later.
  *
  * • Errors for EXPECTED failure modes (e.g. user not found) are returned as
  *   typed objects with a `code` property — never thrown as raw Errors.
@@ -28,7 +28,8 @@
  * • Authorization guards — Task 5.2 (follow-up). Assume the caller is already
  *   authorized before invoking these functions.
  * • Route handlers — lib functions only.
- * • Real email delivery — stubbed with a console.log.
+ * • Email delivery — the route returns a one-time setup link for the tenant
+ *   admin to share because this installation has no email provider configured.
  * • Pagination for listUsers — flagged as TODO below.
  */
 
@@ -95,14 +96,15 @@ function toAuditSnapshot(
   user: UserRow
 ): Record<string, unknown> {
   const { password_hash: _omitted, ...safe } = user;
+  void _omitted;
   return safe as Record<string, unknown>;
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Invites a new user by creating a row in the `users` table with
- * password_hash = NULL (SSO-first invariant).
+ * Invites a new user by creating a row in the `users` table with no password
+ * until the invitee completes the one-time credential setup flow.
  *
  * Role assignment:
  *   If `params.roleIds` is provided and non-empty, each role is inserted into
@@ -122,7 +124,8 @@ function toAuditSnapshot(
 export async function inviteUser(
   client: PoolClient,
   tenantId: string,
-  params: InviteUserParams
+  params: InviteUserParams,
+  actorUserId: string | null = null
 ): Promise<UserRow> {
   const { email, fullName, roleIds } = params;
 
@@ -161,7 +164,7 @@ export async function inviteUser(
   // 3. Audit — same client, same transaction.
   await writeAuditLog(client, {
     tenantId,
-    actorId: null, // no actor context at this layer; wire in actorId when auth is added (Task 5.2)
+    actorId: actorUserId,
     action: "user.invited",
     entityType: "user",
     entityId: user.id,
@@ -172,10 +175,6 @@ export async function inviteUser(
       roleIds: roleIds ?? [],
     },
   });
-
-  // 4. Stub email notification — replace with real delivery in a later task.
-  // [stub] Real invite email would be sent here via the email service.
-  console.log(`[stub] invite email would be sent to ${email}`);
 
   return user;
 }

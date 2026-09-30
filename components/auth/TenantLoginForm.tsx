@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { safeReturnPath } from '@/lib/auth/safeReturnPath';
 
 export function TenantLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextUrl = searchParams?.get('next') || '/dashboard';
+  const nextUrl = safeReturnPath(searchParams?.get('next') ?? null, '/dashboard');
   
   const [orgSlug, setOrgSlug] = useState(searchParams?.get('org') || '');
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export function TenantLoginForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ slug: orgSlug, email, password }),
+        body: JSON.stringify({ slug: orgSlug.trim(), email: email.trim(), password }),
       });
 
       if (!res.ok) {
@@ -38,8 +39,8 @@ export function TenantLoginForm() {
 
       router.push(nextUrl);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Unable to sign in. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +49,7 @@ export function TenantLoginForm() {
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
       {error && (
-        <div className="rounded-md bg-red-50 p-4 dark:bg-red-900/30">
+        <div role="alert" aria-live="polite" className="rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-900/30">
           <div className="text-sm text-red-700 dark:text-red-400">{error}</div>
         </div>
       )}
@@ -61,6 +62,9 @@ export function TenantLoginForm() {
         value={orgSlug}
         onChange={(e) => setOrgSlug(e.target.value)}
         placeholder="acme-corp"
+        autoComplete="organization"
+        autoCapitalize="none"
+        spellCheck={false}
       />
 
       <Input
@@ -71,12 +75,14 @@ export function TenantLoginForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
+        autoComplete="username"
       />
 
       <Input
         label="Password"
         id="password"
         type="password"
+        autoComplete="current-password"
         required
         value={password}
         onChange={(e) => setPassword(e.target.value)}

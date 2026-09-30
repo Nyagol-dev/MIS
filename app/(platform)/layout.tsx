@@ -121,8 +121,10 @@ export default function PlatformLayout({
         }
 
         @media (max-width: 768px) {
+          #platform-sidebar { display: none !important; }
+          .platform-main { margin-left: 0 !important; }
           .platform-content {
-            padding: 1.25rem 1rem;
+            padding: 1.25rem 1rem 6rem !important;
           }
         }
       `}</style>
@@ -134,19 +136,19 @@ export default function PlatformLayout({
                                           visitors go to the platform login.
       */}
       <SessionGuard requiredKind="platform_admin" redirectTo="/platform/login">
-        {(session) => (
+        {() => (
           <div className="platform-shell">
             {/* Fixed sidebar */}
             <PlatformSidebar
               navItems={PLATFORM_NAV}
-              adminEmail={session.platformAdminId}
+              adminEmail="Platform administrator"
             />
 
             {/* Right side: top bar + page content */}
             <div className="platform-main">
               <TopBar
                 pageTitle="Platform Admin"
-                userDisplayName={session.platformAdminId}
+                userDisplayName="Platform administrator"
                 logoutRedirectTo="/platform/login"
               />
 

@@ -190,7 +190,9 @@ export default function TenantSidebar({
   userEmail,
   tenantName,
 }: TenantSidebarProps) {
+  const pathname = usePathname();
   return (
+    <>
     <aside
       id="tenant-sidebar"
       aria-label="Tenant navigation"
@@ -260,5 +262,16 @@ export default function TenantSidebar({
       {/* Footer: user info + logout */}
       <LogoutButton userEmail={userEmail} />
     </aside>
+    <nav className="mobile-sidebar-nav" aria-label="Workspace navigation">
+      {navItems.map((item) => {
+        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+        const shortLabel = item.label === "Dashboard" ? "Home" : item.label === "Entities" ? "Records" : item.label === "Users" ? "People" : item.label;
+        return <a key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={active ? "mobile-sidebar-link is-active" : "mobile-sidebar-link"}>
+          <Icon path={item.iconPath ?? DEFAULT_ICON} />
+          <span>{shortLabel}</span>
+        </a>;
+      })}
+    </nav>
+    </>
   );
 }

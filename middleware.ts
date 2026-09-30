@@ -48,13 +48,9 @@ import {
  * Add new public routes here rather than scattering auth checks.
  */
 const PUBLIC_ROUTE_PREFIXES: readonly string[] = [
-  "/login",
-  "/signup",
-  "/api/auth",      // login/logout API routes
-  "/platform/login",
-  "/api/platform/login",
+  "/api/auth/",     // login/logout API routes
   "/api/webhooks/", // webhook callbacks for payment providers
-  "/_next",         // Next.js internals (also excluded by matcher below)
+  "/_next/",        // Next.js internals (also excluded by matcher below)
 ];
 
 /**
@@ -63,6 +59,13 @@ const PUBLIC_ROUTE_PREFIXES: readonly string[] = [
  */
 const PUBLIC_EXACT_PATHS: readonly string[] = [
   "/", // Marketing homepage — publicly accessible without a session
+  "/login",
+  "/signup",
+  "/platform/login",
+  "/api/platform/login",
+  "/features",
+  "/how-it-works",
+  "/accept-invite",
 ];
 
 /**

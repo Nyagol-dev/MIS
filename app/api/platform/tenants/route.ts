@@ -72,8 +72,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     requirePlatformAdminSession(session);
 
-    const body = await request.json();
-    const result = await createTenant(session, body);
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    }
+    const input = body as {
+      slug?: unknown;
+      name?: unknown;
+      orgTypeId?: unknown;
+      initialAdmin?: { email?: unknown; displayName?: unknown };
+    };
+    const slug = typeof input?.slug === 'string' ? input.slug.trim().toLowerCase() : '';
+    const name = typeof input?.name === 'string' ? input.name.trim() : '';
+    const orgTypeId = typeof input?.orgTypeId === 'string' ? input.orgTypeId.trim().toLowerCase() : '';
+    const adminEmail = typeof input?.initialAdmin?.email === 'string' ? input.initialAdmin.email.trim().toLowerCase() : '';
+    const adminName = typeof input?.initialAdmin?.displayName === 'string' ? input.initialAdmin.displayName.trim() : '';
+    if (
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 80 ||
+      !name || name.length > 160 ||
+      !/^[a-z0-9_]+$/.test(orgTypeId) ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail) || adminEmail.length > 254 ||
+      !adminName || adminName.length > 120
+    ) {
+      return NextResponse.json({ error: 'Enter a valid organisation, type, and initial administrator.' }, { status: 400 });
+    }
+
+    const result = await createTenant(session, {
+      slug,
+      name,
+      orgTypeId,
+      initialAdmin: { email: adminEmail, displayName: adminName },
+    });
     
     if ('code' in result && result.code === 'SLUG_COLLISION') {
       return NextResponse.json({ error: result.message }, { status: 409 });

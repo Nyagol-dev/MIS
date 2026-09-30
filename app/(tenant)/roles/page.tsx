@@ -7,16 +7,12 @@ import { listRoles } from '@/lib/roles/roles';
 import { listEntityTypes } from '@/lib/entities/types';
 import { withTenantContext } from '@/lib/db/withTenant';
 import { RoleTable } from '@/components/roles/RoleTable';
-import { RoleForm } from '@/components/roles/RoleForm';
-import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { CreateRoleButton } from '@/components/roles/CreateRoleButton';
 
 export const metadata = {
   title: 'Roles & Permissions',
 };
-
-// Client wrapper for "Create Role" button to manage modal state
-import { CreateRoleButton } from '@/components/roles/CreateRoleButton';
 
 export default async function RolesPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const searchParams = await props.searchParams;
@@ -101,24 +97,8 @@ export default async function RolesPage(props: { searchParams: Promise<Record<st
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Roles & Permissions
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Manage roles and their permissions for your organization.
-          </p>
-        </div>
-        
-        {canManageRoles && (
-          <div>
-            <CreateRoleButton />
-          </div>
-        )}
-      </div>
-
+    <div className="mx-auto max-w-7xl">
+      <PageHeader eyebrow="Workspace access" title="Roles & permissions" description="Set the access people receive across the workspace and its record types." actions={canManageRoles ? <CreateRoleButton /> : undefined} />
       <RoleTable 
         roles={rolesData.items} 
         currentPage={page} 

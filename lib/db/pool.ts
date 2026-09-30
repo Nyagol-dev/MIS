@@ -59,12 +59,12 @@ function makePoolConfig(connectionString: string): ConstructorParameters<typeof 
     idleTimeoutMillis: 10_000,
     // Connection-level timeout — fail fast rather than queue indefinitely.
     connectionTimeoutMillis: 5_000,
-    // Disable SSL certificate validation only when explicitly opted-out
-    // (e.g. local dev against a self-signed cert). Default: require SSL.
+    // Verify the database certificate by default. Set PGSSLMODE=disable only
+    // for a deliberately local, non-TLS database connection.
     ssl:
       process.env.PGSSLMODE === "disable"
         ? false
-        : { rejectUnauthorized: false },
+        : { rejectUnauthorized: true },
   };
 }
 

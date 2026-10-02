@@ -26,8 +26,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const admissionId = await withTenantContext(session.tenantId, async (client) => {
       const id = await admitPatient({
         tenantId: session.tenantId,
-        patientId: input.patientId,
-        encounterId: input.encounterId,
+        patientId: input.patientId as string,
+        encounterId: input.encounterId as string,
         admittedBy: session.userId,
       }, client);
 

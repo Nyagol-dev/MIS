@@ -72,7 +72,7 @@ export default async function InpatientPage() {
                       {new Date(adm.admitted_at).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {adm.ward_name ? \`\${adm.ward_name} / Bed \${adm.bed_number}\` : 'Unassigned'}
+                      {adm.ward_name ? `${adm.ward_name} / Bed ${adm.bed_number}` : 'Unassigned'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       <button className="text-indigo-600 hover:text-indigo-900">Assign Bed</button>

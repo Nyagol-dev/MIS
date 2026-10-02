@@ -29,11 +29,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const caseId = await withTenantContext(session.tenantId, async (client) => {
       const id = await scheduleTheatreCase({
         tenantId: session.tenantId,
-        patientId: input.patientId,
-        encounterId: input.encounterId,
-        procedureCode: input.procedureCode,
-        procedureName: input.procedureName,
-        scheduledAt: new Date(input.scheduledAt),
+        patientId: input.patientId as string,
+        encounterId: input.encounterId as string,
+        procedureCode: input.procedureCode as string,
+        procedureName: input.procedureName as string,
+        scheduledAt: new Date(input.scheduledAt as string),
         surgeonId: session.userId, // Defaulting to the requester for now
       }, client);
 

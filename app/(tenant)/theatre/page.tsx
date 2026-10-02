@@ -58,12 +58,12 @@ export default async function TheatrePage() {
                       {c.procedure_name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      <span className={\`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                        \${c.status === 'scheduled' ? 'bg-blue-100 text-blue-800' : ''}
-                        \${c.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : ''}
-                        \${c.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
-                        \${c.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
-                      \`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                        ${c.status === 'scheduled' ? 'bg-blue-100 text-blue-800' : ''}
+                        ${c.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : ''}
+                        ${c.status === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                        ${c.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
+                      `}>
                         {c.status.replace('_', ' ')}
                       </span>
                     </td>

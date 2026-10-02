@@ -97,3 +97,43 @@ export async function recordMarEntry(input: AddMarEntryInput, client?: PoolClien
   
   return result.rows[0].id;
 }
+
+export async function addNursingNote(tenantId: string, admissionId: string, authorId: string, noteText: string, client?: PoolClient): Promise<string> {
+  const db = client || appPool;
+  const result = await db.query(
+    `INSERT INTO nursing_notes (tenant_id, admission_id, author_id, note_text)
+     VALUES ($1, $2, $3, $4) RETURNING id`,
+    [tenantId, admissionId, authorId, noteText]
+  );
+  return result.rows[0].id;
+}
+
+export async function getWardsAndBeds(tenantId: string, client?: PoolClient) {
+  const db = client || appPool;
+  const result = await db.query(
+    `SELECT w.id as ward_id, w.name as ward_name, b.id as bed_id, b.bed_number, b.status 
+     FROM wards w 
+     LEFT JOIN beds b ON w.id = b.ward_id AND w.tenant_id = b.tenant_id 
+     WHERE w.tenant_id = $1
+     ORDER BY w.name, b.bed_number`,
+    [tenantId]
+  );
+  return result.rows;
+}
+
+export async function getAdmissions(tenantId: string, client?: PoolClient) {
+  const db = client || appPool;
+  const result = await db.query(
+    `SELECT a.id, a.patient_id, p.first_name, p.last_name, a.admitted_at, a.status, ba.bed_id, b.bed_number, w.name as ward_name
+     FROM admissions a
+     JOIN patients p ON a.patient_id = p.id AND a.tenant_id = p.tenant_id
+     LEFT JOIN bed_assignments ba ON a.id = ba.admission_id AND a.tenant_id = ba.tenant_id AND ba.released_at IS NULL
+     LEFT JOIN beds b ON ba.bed_id = b.id AND ba.tenant_id = b.tenant_id
+     LEFT JOIN wards w ON b.ward_id = w.id AND b.tenant_id = w.tenant_id
+     WHERE a.tenant_id = $1 AND a.status = 'admitted'
+     ORDER BY a.admitted_at DESC`,
+    [tenantId]
+  );
+  return result.rows;
+}
+

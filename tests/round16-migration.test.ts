@@ -1,3 +1,5 @@
+import test, { describe, it, before, after } from 'node:test';
+import assert from 'node:assert';
 import { Pool } from 'pg';
 
 describe('Round 16 Migration - Phase 3', () => {
@@ -5,12 +7,12 @@ describe('Round 16 Migration - Phase 3', () => {
   let tenantId: string;
   let adminId: string;
 
-  beforeAll(async () => {
+  before(async () => {
     pool = new Pool({ connectionString: process.env.DATABASE_URL });
     
     // Create a tenant
     const orgRes = await pool.query(
-      `INSERT INTO organizations (name, slug) VALUES ('Test Hospital', 'test-hospital-3') RETURNING id`
+      `INSERT INTO organizations (name, slug) VALUES ('Test Hospital 3', 'test-hospital-3') RETURNING id`
     );
     tenantId = orgRes.rows[0].id;
     
@@ -22,7 +24,7 @@ describe('Round 16 Migration - Phase 3', () => {
     adminId = userRes.rows[0].id;
   });
 
-  afterAll(async () => {
+  after(async () => {
     if (tenantId) {
       await pool.query(`DELETE FROM organizations WHERE id = $1`, [tenantId]);
     }
@@ -66,7 +68,7 @@ describe('Round 16 Migration - Phase 3', () => {
         `INSERT INTO orders (tenant_id, patient_id, encounter_id, order_type, status, ordered_by) VALUES ($1, $2, $3, 'lab', 'draft', $4) RETURNING id`,
         [tenantId, patientId, encounterId, adminId]
       );
-      expect(orderRes.rows.length).toBe(1);
+      assert.strictEqual(orderRes.rows.length, 1);
     });
   });
 });

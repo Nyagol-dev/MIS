@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { safeReturnPath } from '@/lib/auth/safeReturnPath';
 
-export function TenantLoginForm() {
+export function TenantLoginForm({ defaultSlug = null }: { defaultSlug?: string | null }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextUrl = safeReturnPath(searchParams?.get('next') ?? null, '/dashboard');
   
-  const [orgSlug, setOrgSlug] = useState(searchParams?.get('org') || '');
+  const [orgSlug, setOrgSlug] = useState(defaultSlug || searchParams?.get('org') || '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
@@ -29,7 +29,7 @@ export function TenantLoginForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ slug: orgSlug.trim(), email: email.trim(), password }),
+        body: JSON.stringify({ slug: defaultSlug || orgSlug.trim(), email: email.trim(), password }),
       });
 
       if (!res.ok) {
@@ -54,7 +54,7 @@ export function TenantLoginForm() {
         </div>
       )}
 
-      <Input
+      {!defaultSlug && <Input
         label="Organization Slug"
         id="orgSlug"
         type="text"
@@ -65,7 +65,7 @@ export function TenantLoginForm() {
         autoComplete="organization"
         autoCapitalize="none"
         spellCheck={false}
-      />
+      />}
 
       <Input
         label="Email Address"

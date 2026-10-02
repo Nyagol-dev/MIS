@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 export default function TenantsPage() {
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader eyebrow="Platform operations" title="Organisations" description="Create and maintain organisation workspaces on the platform." actions={<TenantCreateForm />} />
+      <PageHeader eyebrow="Platform operations" title="Hospital provisioning" description="Provision the hospital tenant during an approved maintenance window." actions={process.env.ALLOW_TENANT_PROVISIONING === "true" ? <TenantCreateForm /> : undefined} />
       <TenantTable />
     </div>
   );

@@ -72,6 +72,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     requirePlatformAdminSession(session);
 
+    if (process.env.ALLOW_TENANT_PROVISIONING !== "true") {
+      return NextResponse.json({ error: "Tenant provisioning is disabled for this single-hospital deployment." }, { status: 404 });
+    }
+
     let body: unknown;
     try {
       body = await request.json();

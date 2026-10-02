@@ -99,6 +99,24 @@ function isApiRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
+  // The generic JSONB entity builder is not a clinical or financial record
+  // store. Keep its code and existing rows available for migration/rollback,
+  // but remove tenant access until it is explicitly reintroduced for safe,
+  // non-PHI reference configuration.
+  if (pathname === "/entities" || pathname.startsWith("/entities/") ||
+      pathname === "/api/entities" || pathname.startsWith("/api/entities/")) {
+    return new NextResponse(null, {
+      status: 404,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
+
+  // Ad-hoc reporting can select arbitrary JSONB fields and is withheld until
+  // module/field scope and export controls are established.
+  if (pathname === "/api/reports/adhoc") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   // Skip auth check for public routes.
   if (isPublicRoute(pathname)) {
     return NextResponse.next();

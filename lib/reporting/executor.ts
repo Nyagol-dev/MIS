@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { withTenantContext } from '@/lib/db/withTenant';
+import { writeAuditLog } from '@/lib/db/audit';
 import { getEffectivePermissions, canOnEntityType, ForbiddenError } from '@/lib/auth/permissions';
 import type { SessionPayload } from '@/lib/auth/session';
 import type {
@@ -56,6 +57,16 @@ export async function executeReport(
     if (strategy === 'cached') {
       const cachedRow = await readCache(client, reportDefinitionId);
       if (cachedRow) {
+        await writeAuditLog(client, {
+          tenantId: session.tenantId,
+          actorId: session.userId,
+          action: 'report.execute',
+          entityType: 'report_definition',
+          entityId: reportDefinitionId,
+          oldState: null,
+          newState: null,
+          context: { templateType: definition.template_type, fromCache: true, rowCount: cachedRow.row_count },
+        });
         return {
           data: cachedRow.result as Record<string, unknown>[],
           metadata: {
@@ -79,6 +90,17 @@ export async function executeReport(
 
     // 7. Shape rows
     const data = rows as Record<string, unknown>[];
+
+    await writeAuditLog(client, {
+      tenantId: session.tenantId,
+      actorId: session.userId,
+      action: 'report.execute',
+      entityType: 'report_definition',
+      entityId: reportDefinitionId,
+      oldState: null,
+      newState: null,
+      context: { templateType: definition.template_type, fromCache: false, rowCount: data.length },
+    });
 
     // 8. Write to cache if strategy is 'cached'
     if (strategy === 'cached') {
@@ -150,6 +172,17 @@ export async function executeAdHocReport(
     const { rows } = await client.query(query.sql, query.params);
     const data = rows as Record<string, unknown>[];
 
+    await writeAuditLog(client, {
+      tenantId: session.tenantId,
+      actorId: session.userId,
+      action: 'report.adhoc.execute',
+      entityType: 'report_definition',
+      entityId: null,
+      oldState: null,
+      newState: null,
+      context: { templateType: params.template_type, entityTypeId: params.entity_type_id, rowCount: data.length },
+    });
+
     // 6. Do NOT write to cache (ad-hoc reports are never cached)
 
     // 7. Return ReportResult
@@ -205,6 +238,17 @@ export async function refreshReport(
     const query = await buildReportQuery(client, definition);
     const { rows } = await client.query(query.sql, query.params);
     const data = rows as Record<string, unknown>[];
+
+    await writeAuditLog(client, {
+      tenantId: session.tenantId,
+      actorId: session.userId,
+      action: 'report.refresh',
+      entityType: 'report_definition',
+      entityId: reportDefinitionId,
+      oldState: null,
+      newState: null,
+      context: { templateType: definition.template_type, rowCount: data.length },
+    });
 
     // 4. writeCache (UPSERT)
     await writeCache(

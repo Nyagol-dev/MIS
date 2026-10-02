@@ -810,7 +810,7 @@ export async function deleteEntityRecord(
 /**
  * Returns a single entity record by ID.
  *
- * Reads are not audited in this design (audit_log is mutation-only).
+ * The access is recorded without copying record contents into the audit log.
  *
  * @param session      - Verified session payload.
  * @param entityTypeId - UUID of the entity type.
@@ -826,7 +826,20 @@ export async function getEntityRecord(
   await requireEntityAccess(session, entityTypeId, "read");
 
   return withTenantContext(session.tenantId, async (client) => {
-    return loadRecord(client, entityTypeId, recordId);
+    const record = await loadRecord(client, entityTypeId, recordId);
+    if (record) {
+      await writeAuditLog(client, {
+        tenantId: session.tenantId,
+        actorId: session.userId,
+        action: "entity_record.read",
+        entityType: "entity_record",
+        entityId: recordId,
+        oldState: null,
+        newState: null,
+        context: { entityTypeId },
+      });
+    }
+    return record;
   });
 }
 
@@ -873,6 +886,16 @@ export async function listEntityRecords(
        OFFSET $4`,
       [session.tenantId, entityTypeId, limit, offset]
     );
+    await writeAuditLog(client, {
+      tenantId: session.tenantId,
+      actorId: session.userId,
+      action: "entity_record.list",
+      entityType: "entity_record",
+      entityId: null,
+      oldState: null,
+      newState: null,
+      context: { entityTypeId, limit, offset, resultCount: rows.length },
+    });
     return rows;
   });
 }

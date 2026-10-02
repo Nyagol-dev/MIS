@@ -1,5 +1,6 @@
 import { PoolClient } from 'pg';
 import { ActionExecutor, ActionResult, EventSubscriptionRow, MutationEvent } from '../types';
+import { writeAuditLog } from '@/lib/db/audit';
 
 export const executeWebhook: ActionExecutor = async (
   subscription: EventSubscriptionRow,
@@ -7,34 +8,28 @@ export const executeWebhook: ActionExecutor = async (
   logId: string,
   client: PoolClient
 ): Promise<ActionResult> => {
-  const config = subscription.action_config as Record<string, any>;
-  const url = config.url;
-  const method = config.method || 'POST';
-  const headers = config.headers || {};
+  // User-configured destinations create an SSRF channel and receive arbitrary
+  // mutation payloads that may contain PHI. Keep queued subscriptions
+  // terminally handled while disabling all outbound delivery until a reviewed
+  // allow-list, payload contract and approval model are implemented.
+  await writeAuditLog(client, {
+    tenantId: subscription.tenant_id,
+    actorId: event.actorId,
+    action: 'integration.webhook_blocked',
+    entityType: 'event_subscription',
+    entityId: subscription.id,
+    oldState: null,
+    newState: null,
+    context: {
+      executionId: logId,
+      sourceType: event.sourceType,
+      eventType: event.event,
+      reason: 'outbound_webhooks_disabled_pending_security_review',
+    },
+  });
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers
-      },
-      body: JSON.stringify(event),
-      signal: AbortSignal.timeout(10000)
-    });
-
-    if (!response.ok) {
-      return {
-        success: false,
-        errorMessage: `HTTP Error: ${response.status} ${response.statusText}`
-      };
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return {
-      success: false,
-      errorMessage: error instanceof Error ? error.message : String(error)
-    };
-  }
+  return {
+    success: true,
+    responsePayload: { skipped: true, reason: 'Outbound webhooks are disabled.' },
+  };
 };

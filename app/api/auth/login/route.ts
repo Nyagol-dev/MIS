@@ -32,11 +32,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const input = body as { slug?: unknown; email?: unknown; password?: unknown };
+  const configuredSlug = process.env.DEFAULT_TENANT_SLUG?.trim().toLowerCase();
+  const requestedSlug = configuredSlug || input?.slug;
   if (
-    typeof input?.slug !== "string" ||
+    typeof requestedSlug !== "string" ||
     typeof input.email !== "string" ||
     typeof input.password !== "string" ||
-    input.slug.length > 80 ||
+    requestedSlug.length > 80 ||
     input.email.length > 254 ||
     input.password.length === 0 ||
     input.password.length > 1_024
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return jsonError("Organization, email, and password are required.", 400);
   }
 
-  const slug = input.slug.trim().toLowerCase();
+  const slug = requestedSlug.trim().toLowerCase();
   const email = input.email.trim().toLowerCase();
   const password = input.password;
   let scopeHash: string | null = null;

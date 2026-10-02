@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/authz-policy.test.ts tests/security-migration.test.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
     "bootstrap:platform-admin": "tsx scripts/bootstrap-platform-admin.ts"
   },
   "dependencies": {

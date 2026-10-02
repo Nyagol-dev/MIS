@@ -29,6 +29,7 @@ import { _adminPoolInternal } from "@/lib/db/pool";
 import type { Pool } from "pg";
 import type { PlatformAdminSessionPayload, AnySessionPayload } from "./session";
 import { requirePlatformAdminSession } from "./platformAdmin";
+import { hasEntityPermission, hasPermission } from "@/lib/authz/policy";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -152,7 +153,7 @@ export async function getEffectivePermissions(
  * @param codename - The permission codename to check.
  */
 export function can(perms: EffectivePermissions, codename: string): boolean {
-  return perms.codenames.has(codename);
+  return hasPermission(perms, codename);
 }
 
 /**
@@ -170,10 +171,7 @@ export function canOnEntityType(
   entityTypeId: string,
   action: string
 ): boolean {
-  const grants = perms.entityGrants.get(entityTypeId);
-  if (!grants) return false;
-  // 'manage' is a superset of all other actions.
-  return grants.has(action) || grants.has("manage");
+  return hasEntityPermission(perms, entityTypeId, action as Parameters<typeof hasEntityPermission>[2]);
 }
 
 /**

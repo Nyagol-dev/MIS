@@ -159,6 +159,11 @@ export const PERMISSION_CATALOGUE: readonly CatalogueEntry[] = [
   { codename: 'mar:administer', resource: 'mar', action: 'administer', description: 'Record medication administration', maxScope: 'department', category: 'inpatient' },
   { codename: 'mar:read', resource: 'mar', action: 'read', description: 'View medication administration record', maxScope: 'department', category: 'inpatient' },
 
+  // ── Theatre ───────────────────────────────────────────────────────────────
+  { codename: 'theatre_case:create', resource: 'theatre_case', action: 'create', description: 'Schedule theatre cases', maxScope: 'department', category: 'inpatient' },
+  { codename: 'theatre_case:read', resource: 'theatre_case', action: 'read', description: 'View theatre schedules and cases', maxScope: 'hospital', category: 'inpatient' },
+  { codename: 'theatre_case:update', resource: 'theatre_case', action: 'update', description: 'Update theatre cases and notes', maxScope: 'department', category: 'inpatient' },
+
   // ── Billing ───────────────────────────────────────────────────────────────
   { codename: 'invoice:create', resource: 'invoice', action: 'create', description: 'Create patient invoices', maxScope: 'hospital', category: 'billing' },
   { codename: 'invoice:read', resource: 'invoice', action: 'read', description: 'View invoices', maxScope: 'hospital', category: 'billing' },
@@ -366,6 +371,9 @@ export const SYSTEM_ROLES: readonly SystemRoleDefinition[] = [
       { codename: 'appointment:update', scope: 'department' },
       { codename: 'break_glass:request', scope: 'hospital' },
       { codename: 'triage:read', scope: 'assigned' },
+      { codename: 'theatre_case:create', scope: 'department' },
+      { codename: 'theatre_case:read', scope: 'department' },
+      { codename: 'theatre_case:update', scope: 'department' },
     ],
   },
   {
@@ -392,6 +400,7 @@ export const SYSTEM_ROLES: readonly SystemRoleDefinition[] = [
       { codename: 'admission:read', scope: 'department' },
       { codename: 'appointment:read', scope: 'department' },
       { codename: 'break_glass:request', scope: 'hospital' },
+      { codename: 'theatre_case:read', scope: 'department' },
     ],
   },
   {

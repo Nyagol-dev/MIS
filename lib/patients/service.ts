@@ -1,5 +1,5 @@
 import { PoolClient } from 'pg';
-import { getPool } from '../db/pool';
+import { appPool } from '../db/pool';
 
 export interface CreatePatientInput {
   tenantId: string;
@@ -25,8 +25,7 @@ export interface PatientRecord {
 }
 
 export async function createPatient(input: CreatePatientInput, client?: PoolClient): Promise<string> {
-  const pool = getPool();
-  const db = client || pool;
+  const db = client || appPool;
 
   const result = await db.query(
     `INSERT INTO patients (tenant_id, first_name, last_name, dob, gender, created_by)
@@ -58,9 +57,8 @@ export async function createPatient(input: CreatePatientInput, client?: PoolClie
 }
 
 export async function findPotentialDuplicates(tenantId: string, firstName: string, lastName: string, dob: string, phone?: string): Promise<PatientRecord[]> {
-  const pool = getPool();
   // Basic exact match for now; normally you'd use pg_trgm for fuzzy matching
-  const result = await pool.query(
+  const result = await appPool.query(
     `SELECT p.id, p.tenant_id, p.first_name, p.last_name, p.dob, p.gender
      FROM patients p
      LEFT JOIN patient_contacts c ON p.id = c.patient_id AND p.tenant_id = c.tenant_id

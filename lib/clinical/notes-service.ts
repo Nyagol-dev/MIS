@@ -1,5 +1,5 @@
 import { PoolClient } from 'pg';
-import { getPool } from '../db/pool';
+import { appPool } from '../db/pool';
 
 export interface CreateClinicalNoteInput {
   tenantId: string;
@@ -12,8 +12,7 @@ export interface CreateClinicalNoteInput {
 }
 
 export async function createClinicalNote(input: CreateClinicalNoteInput, client?: PoolClient): Promise<string> {
-  const pool = getPool();
-  const db = client || pool;
+  const db = client || appPool;
 
   const result = await db.query(
     `INSERT INTO clinical_notes (tenant_id, encounter_id, patient_id, author_id, note_type, content, parent_note_id)
@@ -33,8 +32,7 @@ export async function createClinicalNote(input: CreateClinicalNoteInput, client?
 }
 
 export async function lockClinicalNote(tenantId: string, noteId: string, client?: PoolClient): Promise<void> {
-  const pool = getPool();
-  const db = client || pool;
+  const db = client || appPool;
 
   await db.query(
     `UPDATE clinical_notes SET is_locked = TRUE, updated_at = now() WHERE tenant_id = $1 AND id = $2`,
@@ -42,9 +40,8 @@ export async function lockClinicalNote(tenantId: string, noteId: string, client?
   );
 }
 
-export async function getEncounterNotes(tenantId: string, encounterId: string): Promise<any[]> {
-  const pool = getPool();
-  const result = await pool.query(
+export async function getEncounterNotes(tenantId: string, encounterId: string): Promise<unknown[]> {
+  const result = await appPool.query(
     `SELECT n.id, n.note_type, n.content, n.is_locked, n.parent_note_id, n.created_at, u.display_name as author_name
      FROM clinical_notes n
      JOIN users u ON n.author_id = u.id AND n.tenant_id = u.tenant_id

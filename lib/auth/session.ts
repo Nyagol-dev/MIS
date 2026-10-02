@@ -314,3 +314,20 @@ export async function getSessionFromRequest(
  * reading this directly where possible.
  */
 export { COOKIE_NAME };
+
+/**
+ * Reads and verifies the session JWT for use in Server Components.
+ */
+import { cookies } from 'next/headers';
+
+export async function getSession(): Promise<SessionPayload | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (!token) return null;
+  try {
+    return await verifySession(token);
+  } catch {
+    return null;
+  }
+}
+

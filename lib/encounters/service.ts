@@ -1,5 +1,5 @@
 import { PoolClient } from 'pg';
-import { getPool } from '../db/pool';
+import { appPool } from '../db/pool';
 
 export interface CreateEncounterInput {
   tenantId: string;
@@ -23,8 +23,7 @@ export interface CreateTriageInput {
 }
 
 export async function createEncounter(input: CreateEncounterInput, client?: PoolClient): Promise<string> {
-  const pool = getPool();
-  const db = client || pool;
+  const db = client || appPool;
 
   const result = await db.query(
     `INSERT INTO encounters (tenant_id, patient_id, department_id, encounter_type, status, created_by)
@@ -43,8 +42,7 @@ export async function createEncounter(input: CreateEncounterInput, client?: Pool
 }
 
 export async function updateEncounterStatus(tenantId: string, encounterId: string, status: string, client?: PoolClient): Promise<void> {
-  const pool = getPool();
-  const db = client || pool;
+  const db = client || appPool;
 
   await db.query(
     `UPDATE encounters SET status = $1 WHERE tenant_id = $2 AND id = $3`,
@@ -53,8 +51,7 @@ export async function updateEncounterStatus(tenantId: string, encounterId: strin
 }
 
 export async function createTriageRecord(input: CreateTriageInput, client?: PoolClient): Promise<string> {
-  const pool = getPool();
-  const db = client || pool;
+  const db = client || appPool;
 
   const result = await db.query(
     `INSERT INTO triage_records (tenant_id, encounter_id, temperature, blood_pressure, heart_rate, respiratory_rate, oxygen_saturation, notes, created_by)

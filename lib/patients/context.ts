@@ -1,5 +1,5 @@
 import { PoolClient } from 'pg';
-import { getPool } from '../db/pool';
+import { appPool } from '../db/pool';
 
 export type PatientContextType = 'admitted' | 'emergency' | 'discharged_recent' | 'ongoing_care' | 'returning' | 'new_visit';
 
@@ -9,8 +9,7 @@ export interface PatientContext {
 }
 
 export async function getPatientContext(tenantId: string, patientId: string, client?: PoolClient): Promise<PatientContext> {
-  const pool = getPool();
-  const db = client || pool;
+  const db = client || appPool;
 
   const reasons: string[] = [];
 

@@ -74,6 +74,7 @@ CREATE TABLE roles (
     is_system       BOOLEAN NOT NULL DEFAULT FALSE,          -- TRUE = immutable by tenant admins
     metadata        JSONB NOT NULL DEFAULT '{}',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     PRIMARY KEY (tenant_id, id),
     UNIQUE (tenant_id, name)
@@ -160,6 +161,7 @@ CREATE TABLE audit_log (
     ip_address      INET,
     context         JSONB NOT NULL DEFAULT '{}',              -- request-id, session info, etc.
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
@@ -192,6 +194,7 @@ CREATE TABLE tenant_permission_overrides (
     resource        TEXT NOT NULL,                            -- custom entity_type slug or resource name
     action          TEXT NOT NULL,                            -- unconstrained — tenants define the vocabulary
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     PRIMARY KEY (tenant_id, id),
     UNIQUE (tenant_id, codename)
@@ -350,6 +353,7 @@ CREATE TABLE field_definitions (
     constraints     JSONB NOT NULL DEFAULT '{}',              -- min, max, pattern, enum_values, ref_entity_type, etc.
     retired_at      TIMESTAMPTZ,                             -- soft-delete; NULL = active
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 
     PRIMARY KEY (tenant_id, id),
     FOREIGN KEY (tenant_id, entity_type_id)

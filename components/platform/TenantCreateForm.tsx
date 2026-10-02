@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 
 export function TenantCreateForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,7 +69,18 @@ export function TenantCreateForm() {
           {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
           <Input name="slug" label="Organisation slug" autoCapitalize="none" required />
           <Input name="name" label="Organisation name" required />
-          <Input name="orgTypeId" label="Organisation type" placeholder="school, clinic, ngo, civic_agency, other" autoCapitalize="none" required />
+          <Select
+            name="orgTypeId"
+            label="Organisation type"
+            required
+            options={[
+              { value: "school",       label: "School" },
+              { value: "clinic",       label: "Clinic" },
+              { value: "ngo",          label: "NGO" },
+              { value: "civic_agency", label: "Civic Agency" },
+              { value: "other",        label: "Other" },
+            ]}
+          />
           <div className="border-t border-slate-200 pt-4">
             <p className="mb-3 text-sm font-semibold text-slate-800">First workspace administrator</p>
             <div className="space-y-4">

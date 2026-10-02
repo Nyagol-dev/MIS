@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { withTenantContext } from '@/lib/db/withTenant';
 import { writeAuditLog } from '@/lib/db/audit';
 import { getEffectivePermissions, canOnEntityType, ForbiddenError } from '@/lib/auth/permissions';

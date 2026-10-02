@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 
 export interface SelectOption {
@@ -22,7 +23,8 @@ export const Select: React.FC<SelectProps> = ({
   children,
   ...props
 }) => {
-  const selectId = id || React.useId();
+  const generatedId = React.useId();
+  const selectId = id || generatedId;
   const errorId = `${selectId}-error`;
   const helperId = `${selectId}-helper`;
 

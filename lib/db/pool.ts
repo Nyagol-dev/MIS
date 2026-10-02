@@ -37,9 +37,9 @@ import { Pool } from "pg";
 // ─── Type augmentation for the cache ────────────────────────────────────────
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __mis_app_pool: Pool | undefined;
-  // eslint-disable-next-line no-var
+   
   var __mis_admin_pool: Pool | undefined;
 }
 

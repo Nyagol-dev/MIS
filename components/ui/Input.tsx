@@ -15,7 +15,8 @@ export const Input: React.FC<InputProps> = ({
   type = 'text',
   ...props
 }) => {
-  const inputId = id || React.useId();
+  const generatedId = React.useId();
+  const inputId = id || generatedId;
   const errorId = `${inputId}-error`;
   const helperId = `${inputId}-helper`;
 

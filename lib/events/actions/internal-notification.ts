@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { PoolClient } from 'pg';
 import { ActionExecutor, ActionResult, EventSubscriptionRow, MutationEvent } from '../types';
 

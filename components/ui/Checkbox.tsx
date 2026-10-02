@@ -14,7 +14,8 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   id,
   ...props
 }) => {
-  const checkboxId = id || React.useId();
+  const generatedId = React.useId();
+  const checkboxId = id || generatedId;
   const errorId = `${checkboxId}-error`;
   const helperId = `${checkboxId}-helper`;
 

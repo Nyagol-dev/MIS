@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
+import { seedPermissionCatalogue } from '../lib/authz/seed';
 
 const migrationDir = path.join(process.cwd(), 'db', 'migrations');
 const baselineMode = process.argv.includes('--baseline-existing');
@@ -70,6 +71,10 @@ async function main(): Promise<void> {
         throw error;
       }
     }
+
+    // Sync code-defined permission catalogue into DB
+    const seedStats = await seedPermissionCatalogue(client);
+    process.stdout.write(`Synced permission catalogue (${seedStats.inserted} inserted, ${seedStats.updated} updated).\n`);
   } finally {
     client.release();
   }

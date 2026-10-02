@@ -23,6 +23,7 @@ import type { SessionPayload } from '@/lib/auth/session';
 import { ForbiddenError } from '@/lib/auth/permissions';
 import { CATALOGUE_MAP, type PermissionScope } from './catalogue';
 import type { UserAuthzContext, AuthzResourceContext } from './types';
+import { can } from './can';
 
 // Re-export everything from can.ts and types.ts for convenience
 export { can, canAny, canAll, scopeCovers, isDepartmentHead } from './can';
@@ -129,9 +130,7 @@ export function authorize(
   codename: string,
   context?: AuthzResourceContext,
 ): void {
-  // Import locally to avoid circular — can is a pure module
-  const { can: canCheck } = require('./can') as typeof import('./can');
-  if (!canCheck(authz, codename, context)) {
+  if (!can(authz, codename, context)) {
     const entry = CATALOGUE_MAP.get(codename);
     const description = entry?.description ?? codename;
     throw new ForbiddenError(

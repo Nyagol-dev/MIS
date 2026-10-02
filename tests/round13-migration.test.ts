@@ -66,5 +66,5 @@ test('break_glass_grants has no DELETE policy (clinical data immutability)', asy
   const sql = await migration;
   // Ensure no DELETE policy is created for break_glass_grants
   // The migration should have an explicit comment about no DELETE
-  assert.match(sql, /No DELETE policy.*break-glass grants must never be deleted/s);
+  assert.match(sql, /No DELETE policy[\s\S]*break-glass grants must never be deleted/);
 });

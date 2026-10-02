@@ -120,9 +120,9 @@ export const PERMISSION_CATALOGUE: readonly CatalogueEntry[] = [
   { codename: 'triage:read', resource: 'triage', action: 'read', description: 'View triage records', maxScope: 'department', category: 'clinical' },
   { codename: 'vitals:create', resource: 'vitals', action: 'create', description: 'Record patient vitals', maxScope: 'department', category: 'clinical' },
   { codename: 'vitals:read', resource: 'vitals', action: 'read', description: 'View patient vitals', maxScope: 'department', category: 'clinical' },
-  { codename: 'appointment:create', resource: 'appointment', action: 'create', description: 'Book appointments', maxScope: 'department', category: 'clinical' },
-  { codename: 'appointment:read', resource: 'appointment', action: 'read', description: 'View appointments', maxScope: 'department', category: 'clinical' },
-  { codename: 'appointment:update', resource: 'appointment', action: 'update', description: 'Reschedule or cancel appointments', maxScope: 'department', category: 'clinical' },
+  { codename: 'appointment:create', resource: 'appointment', action: 'create', description: 'Book appointments', maxScope: 'hospital', category: 'clinical' },
+  { codename: 'appointment:read', resource: 'appointment', action: 'read', description: 'View appointments', maxScope: 'hospital', category: 'clinical' },
+  { codename: 'appointment:update', resource: 'appointment', action: 'update', description: 'Reschedule or cancel appointments', maxScope: 'hospital', category: 'clinical' },
 
   // ── Orders (CPOE) ─────────────────────────────────────────────────────────
   { codename: 'order:create', resource: 'order', action: 'create', description: 'Place clinical orders (lab, radiology, pharmacy)', maxScope: 'department', category: 'clinical' },
@@ -133,13 +133,13 @@ export const PERMISSION_CATALOGUE: readonly CatalogueEntry[] = [
   // ── Laboratory ────────────────────────────────────────────────────────────
   { codename: 'lab_sample:create', resource: 'lab_sample', action: 'create', description: 'Collect and label lab samples', maxScope: 'department', category: 'laboratory' },
   { codename: 'lab_result:create', resource: 'lab_result', action: 'create', description: 'Enter lab results', maxScope: 'department', category: 'laboratory' },
-  { codename: 'lab_result:read', resource: 'lab_result', action: 'read', description: 'View lab results', maxScope: 'department', category: 'laboratory' },
+  { codename: 'lab_result:read', resource: 'lab_result', action: 'read', description: 'View lab results', maxScope: 'hospital', category: 'laboratory' },
   { codename: 'lab_result:verify', resource: 'lab_result', action: 'verify', description: 'Verify and release lab results', maxScope: 'department', category: 'laboratory' },
 
   // ── Radiology ─────────────────────────────────────────────────────────────
   { codename: 'imaging_order:read', resource: 'imaging_order', action: 'read', description: 'View imaging orders', maxScope: 'department', category: 'radiology' },
   { codename: 'imaging_report:create', resource: 'imaging_report', action: 'create', description: 'Create radiology reports', maxScope: 'department', category: 'radiology' },
-  { codename: 'imaging_report:read', resource: 'imaging_report', action: 'read', description: 'View radiology reports', maxScope: 'department', category: 'radiology' },
+  { codename: 'imaging_report:read', resource: 'imaging_report', action: 'read', description: 'View radiology reports', maxScope: 'hospital', category: 'radiology' },
 
   // ── Pharmacy ──────────────────────────────────────────────────────────────
   { codename: 'prescription:read', resource: 'prescription', action: 'read', description: 'View prescriptions', maxScope: 'department', category: 'pharmacy' },
@@ -211,8 +211,8 @@ export const PERMISSION_CATALOGUE: readonly CatalogueEntry[] = [
   { codename: 'notification_template:manage', resource: 'notification_template', action: 'manage', description: 'Manage notification templates', maxScope: 'hospital', category: 'system' },
 
   // ── Reporting ─────────────────────────────────────────────────────────────
-  { codename: 'report:read', resource: 'report', action: 'read', description: 'View reports', maxScope: 'department', category: 'reporting' },
-  { codename: 'report:export', resource: 'report', action: 'read', description: 'Export reports', maxScope: 'department', category: 'reporting' },
+  { codename: 'report:read', resource: 'report', action: 'read', description: 'View reports', maxScope: 'hospital', category: 'reporting' },
+  { codename: 'report:export', resource: 'report', action: 'read', description: 'Export reports', maxScope: 'hospital', category: 'reporting' },
   { codename: 'report:manage', resource: 'report', action: 'manage', description: 'Create and manage report definitions', maxScope: 'hospital', category: 'reporting' },
 
   // ── Referrals ─────────────────────────────────────────────────────────────
@@ -220,15 +220,15 @@ export const PERMISSION_CATALOGUE: readonly CatalogueEntry[] = [
   { codename: 'referral:read', resource: 'referral', action: 'read', description: 'View referrals', maxScope: 'department', category: 'clinical' },
 
   // ── Inventory / Store ─────────────────────────────────────────────────────
-  { codename: 'inventory:read', resource: 'inventory', action: 'read', description: 'View inventory/store items', maxScope: 'department', category: 'administration' },
-  { codename: 'inventory:manage', resource: 'inventory', action: 'manage', description: 'Manage inventory (requisitions, receiving, stock-take)', maxScope: 'department', category: 'administration' },
-  { codename: 'requisition:create', resource: 'requisition', action: 'create', description: 'Create store requisitions', maxScope: 'department', category: 'administration' },
-  { codename: 'requisition:approve', resource: 'requisition', action: 'approve', description: 'Approve store requisitions', maxScope: 'department', category: 'administration' },
+  { codename: 'inventory:read', resource: 'inventory', action: 'read', description: 'View inventory/store items', maxScope: 'hospital', category: 'administration' },
+  { codename: 'inventory:manage', resource: 'inventory', action: 'manage', description: 'Manage inventory (requisitions, receiving, stock-take)', maxScope: 'hospital', category: 'administration' },
+  { codename: 'requisition:create', resource: 'requisition', action: 'create', description: 'Create store requisitions', maxScope: 'hospital', category: 'administration' },
+  { codename: 'requisition:approve', resource: 'requisition', action: 'approve', description: 'Approve store requisitions', maxScope: 'hospital', category: 'administration' },
 
   // ── HR ────────────────────────────────────────────────────────────────────
   { codename: 'hr:manage', resource: 'hr', action: 'manage', description: 'Manage staff HR records, rosters, and leave', maxScope: 'hospital', category: 'administration' },
-  { codename: 'roster:read', resource: 'roster', action: 'read', description: 'View staff rosters', maxScope: 'department', category: 'administration' },
-  { codename: 'roster:manage', resource: 'roster', action: 'manage', description: 'Manage shift rosters', maxScope: 'department', category: 'administration' },
+  { codename: 'roster:read', resource: 'roster', action: 'read', description: 'View staff rosters', maxScope: 'hospital', category: 'administration' },
+  { codename: 'roster:manage', resource: 'roster', action: 'manage', description: 'Manage shift rosters', maxScope: 'hospital', category: 'administration' },
 
   // ── Health Records / HIM ──────────────────────────────────────────────────
   { codename: 'him:manage', resource: 'him', action: 'manage', description: 'Health records management (coding, completeness, amendments)', maxScope: 'hospital', category: 'administration' },

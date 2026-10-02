@@ -5,7 +5,6 @@ import {
   SYSTEM_ROLES,
   CATALOGUE_MAP,
   VALID_CODENAMES,
-  type SystemRoleDefinition,
 } from '../lib/authz/catalogue';
 
 // ─── Catalogue integrity ──────────────────────────────────────────────────────

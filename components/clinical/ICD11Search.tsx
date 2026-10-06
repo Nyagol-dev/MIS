@@ -117,7 +117,7 @@ export function ICD11Search({ onSelect }: { onSelect: (diagnosis: ICD11Result) =
             </ul>
           ) : !loading ? (
             <div className="cursor-default select-none relative py-2 pl-3 pr-9 text-slate-500">
-              No diagnoses found for "{query}"
+              No diagnoses found for &quot;{query}&quot;
             </div>
           ) : null}
         </div>

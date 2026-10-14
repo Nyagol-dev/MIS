@@ -3,34 +3,34 @@ import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 
 export const metadata = {
-  title: "How it works — Nexus MIS",
-  description: "Understand the platform and organisation workspace in Nexus MIS.",
+  title: "How the hospital system works",
+  description: "How hospital staff use the HMIS across registration, care, diagnostics, inpatient services, and billing.",
 };
 
 const phases = [
   {
     number: "01",
-    label: "Platform administration",
-    title: "Create an organisation workspace",
-    description: "A platform administrator sets up the organisation and its first workspace administrator. Platform operations live in their own sign-in area.",
+    label: "Hospital setup",
+    title: "Provision the hospital once",
+    description: "System support configures the hospital profile, departments, enabled services, and initial administrators through a restricted setup area.",
     href: "/platform/login",
-    action: "Platform administrator sign in",
+    action: "System administrator sign in",
   },
   {
     number: "02",
-    label: "Workspace administration",
-    title: "Set up the way your team works",
-    description: "Workspace administrators add people, define roles and configure the record types used by their organisation.",
+    label: "Hospital administration",
+    title: "Assign staff and access",
+    description: "Hospital administrators maintain staff accounts, departments, roles, and access to clinical and operational modules.",
     href: "/login",
-    action: "Organisation workspace sign in",
+    action: "Hospital staff sign in",
   },
   {
     number: "03",
     label: "Everyday work",
-    title: "Keep records moving with the team",
-    description: "Staff work with the records they can access. The workspace keeps user roles, permissions and organisation data within the tenant boundary.",
+    title: "Coordinate care across the patient journey",
+    description: "Authorised teams work in registration, OPD, diagnostics, pharmacy, inpatient care, theatre, health records, billing, and claims.",
     href: "/features",
-    action: "Review workspace features",
+    action: "Review hospital services",
   },
 ];
 
@@ -40,9 +40,9 @@ export default function HowItWorksPage() {
       <SiteHeader current="how-it-works" />
       <main className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-brand-800">A steady handoff</p>
-          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">From platform setup to the work of the day.</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">Nexus has two administration levels. Each one has a clear job, its own sign-in area and the tools needed for that part of the work.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-brand-800">Hospital operations</p>
+          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">A clear path from hospital setup to daily care.</h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">A restricted setup area supports provisioning. Hospital staff then use role based access for their clinical and operational responsibilities.</p>
         </div>
 
         <ol className="mt-14 max-w-5xl border-t border-slate-200">

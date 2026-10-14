@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MIS — Management Information System",
-  description:
-    "A unified platform for schools, clinics, NGOs, and civic agencies to manage operations, scale programs, and handle complex reporting.",
+  title: {
+    default: "Hospital Management Information System",
+    template: "%s | HMIS",
+  },
+  description: "Hospital operations, patient care, clinical services, health records, billing, and claims.",
 };
 
 export default function RootLayout({

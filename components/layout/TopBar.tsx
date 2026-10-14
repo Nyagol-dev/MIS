@@ -74,9 +74,13 @@ export default function TopBar({
   const router = useRouter();
   const pathname = usePathname();
   const sectionTitles: Record<string, string> = {
-    "/dashboard": "Workspace", "/users": "People", "/roles": "Roles & permissions",
-    "/entities": "Records", "/platform/dashboard": "Platform overview",
-    "/platform/tenants": "Organisations", "/platform/admins": "Administrators",
+    "/dashboard": "Hospital overview", "/patients": "Patient registry", "/clinical/orders": "Outpatient care",
+    "/lab": "Laboratory", "/pharmacy": "Pharmacy", "/radiology": "Radiology",
+    "/inpatient": "Inpatient care", "/theatre": "Theatre", "/billing": "Billing",
+    "/claims": "SHA & insurance claims", "/him": "Health records", "/users": "Hospital staff",
+    "/roles": "Roles & permissions", "/entities": "Reference records",
+    "/platform/dashboard": "Platform overview", "/platform/tenants": "Hospitals",
+    "/platform/admins": "Administrators",
   };
 
   async function handleLogout() {
@@ -168,7 +172,9 @@ export default function TopBar({
             whiteSpace: "nowrap",
           }}
         >
-          {sectionTitles[pathname] ?? pageTitle}
+        {Object.entries(sectionTitles)
+          .sort(([a], [b]) => b.length - a.length)
+          .find(([path]) => pathname === path || pathname.startsWith(path + "/"))?.[1] ?? pageTitle}
         </div>
       </div>
 

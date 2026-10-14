@@ -9,7 +9,7 @@ import { EntityTypeList } from '@/components/entities/EntityTypeList';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export const metadata = {
-  title: 'Entity Types',
+  title: 'Reference data',
 };
 
 export default async function EntitiesPage() {
@@ -33,7 +33,7 @@ export default async function EntitiesPage() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader eyebrow="Workspace data" title="Records" description="Choose a record type to browse and manage the information your organisation keeps." />
+      <PageHeader eyebrow="Hospital configuration" title="Reference records" description="Browse and manage non-clinical reference lists configured for this hospital." />
       <EntityTypeList entityTypes={allowedEntityTypes} basePath="/entities" />
     </div>
   );

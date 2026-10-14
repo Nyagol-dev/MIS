@@ -17,8 +17,7 @@ export default async function HIMWorkspacePage() {
 
   await withTenantContext(session.tenantId, async (client) => {
     const authz = await loadUserAuthz(client, session);
-    // require hospital admin or medical records access, we'll use a broad check or assume it's checked
-    // authorize(authz, 'audit:read');
+    authorize(authz, 'him:manage');
   });
 
   return (

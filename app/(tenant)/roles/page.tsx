@@ -98,7 +98,7 @@ export default async function RolesPage(props: { searchParams: Promise<Record<st
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader eyebrow="Workspace access" title="Roles & permissions" description="Set the access people receive across the workspace and its record types." actions={canManageRoles ? <CreateRoleButton /> : undefined} />
+      <PageHeader eyebrow="Hospital administration" title="Roles & permissions" description="Set the clinical and operational access assigned to hospital staff." actions={canManageRoles ? <CreateRoleButton /> : undefined} />
       <RoleTable 
         roles={rolesData.items} 
         currentPage={page} 

@@ -11,7 +11,7 @@ import { UserInviteForm } from '@/components/users/UserInviteForm';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export const metadata = {
-  title: 'Users',
+  title: 'Hospital staff',
 };
 
 export default async function UsersPage(props: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -57,7 +57,7 @@ export default async function UsersPage(props: { searchParams: Promise<Record<st
 
   return (
     <div className="mx-auto max-w-7xl">
-      <PageHeader eyebrow="Workspace people" title="People" description="Manage the people who can access this workspace." actions={canManageUsers ? <UserInviteForm roles={rolesData.items.map(r => ({ id: r.id, name: r.name }))} /> : undefined} />
+      <PageHeader eyebrow="Hospital administration" title="Staff directory" description="Manage staff accounts, invitations, and assigned system roles." actions={canManageUsers ? <UserInviteForm roles={rolesData.items.map(r => ({ id: r.id, name: r.name }))} /> : undefined} />
       <UserTable 
         users={usersData.items} 
         currentPage={page} 

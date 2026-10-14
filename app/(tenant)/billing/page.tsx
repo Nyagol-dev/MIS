@@ -1,69 +1,50 @@
-import React from 'react';
+import { Metadata } from 'next';
 import { getSession } from '@/lib/auth/session';
-import { getEffectivePermissions, can } from '@/lib/auth/permissions';
+import { redirect } from 'next/navigation';
+import { withTenantContext } from '@/lib/db/withTenant';
+import { loadUserAuthz, authorize } from '@/lib/authz/check';
 import { getInvoices } from '@/lib/billing/service';
+import BillingClient from './BillingClient';
+
+export const metadata: Metadata = {
+  title: 'Billing & Revenue Cycle | HMIS',
+  description: 'Invoices, payments, M-Pesa settlements, waivers, and patient statements',
+};
 
 export default async function BillingDashboard() {
   const session = await getSession();
-  if (!session) return <div>Unauthorized</div>;
+  if (!session) redirect('/login');
 
-  const perms = await getEffectivePermissions(session.tenantId, session.userId);
-  if (!can(perms, 'invoice:read')) return <div>Forbidden</div>;
+  const { invoices, patients } = await withTenantContext(session.tenantId, async (client) => {
+    const authz = await loadUserAuthz(client, session);
+    authorize(authz, 'invoice:read');
 
-  const invoices = await getInvoices(session.tenantId);
+    const invs = await getInvoices(session.tenantId, client);
+    const patRes = await client.query(
+      `SELECT id, first_name, last_name, mrn
+       FROM patients
+       WHERE tenant_id = $1
+       ORDER BY last_name ASC
+       LIMIT 100`,
+      [session.tenantId]
+    );
+
+    return {
+      invoices: invs,
+      patients: patRes.rows,
+    };
+  });
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Billing Dashboard</h1>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-          Create Invoice
-        </button>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Billing & Revenue Cycle</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Manage patient billing, M-Pesa settlements, waivers, and cashier reconciliation
+        </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="p-4 font-semibold text-gray-700">Invoice #</th>
-              <th className="p-4 font-semibold text-gray-700">Patient</th>
-              <th className="p-4 font-semibold text-gray-700">Date</th>
-              <th className="p-4 font-semibold text-gray-700">Total (KES)</th>
-              <th className="p-4 font-semibold text-gray-700">Status</th>
-              <th className="p-4 font-semibold text-gray-700">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="p-4 text-center text-gray-500">No invoices found</td>
-              </tr>
-            ) : (
-              invoices.map((inv: any) => (
-                <tr key={inv.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="p-4 font-medium">{inv.invoice_number}</td>
-                  <td className="p-4">{inv.first_name} {inv.last_name}</td>
-                  <td className="p-4">{new Date(inv.created_at).toLocaleDateString()}</td>
-                  <td className="p-4">{(inv.total_minor_units / 100).toFixed(2)}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full \${
-                      inv.status === 'paid' ? 'bg-green-100 text-green-800' :
-                      inv.status === 'open' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <button className="text-blue-600 hover:underline mr-3">View</button>
-                    {inv.status !== 'paid' && <button className="text-green-600 hover:underline">Pay</button>}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <BillingClient invoices={invoices} patients={patients} />
     </div>
   );
 }

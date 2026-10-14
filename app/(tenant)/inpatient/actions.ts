@@ -81,3 +81,24 @@ export async function handleMarEntry(admissionId: string, drugCode: string, dose
 
   revalidatePath('/inpatient');
 }
+
+export async function handleDischargePatient(admissionId: string, reason: string) {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
+  await withTenantContext(session.tenantId, async (client) => {
+    await dischargePatient(session.tenantId, admissionId, session.userId, reason, client);
+
+    await writeAuditLog(client, {
+      tenantId: session.tenantId,
+      actorId: session.userId,
+      action: 'admission.discharged',
+      entityType: 'admission',
+      entityId: admissionId,
+      oldState: null,
+      newState: { reason },
+    });
+  });
+
+  revalidatePath('/inpatient');
+}

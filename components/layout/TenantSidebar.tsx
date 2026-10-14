@@ -24,6 +24,7 @@ import { useState } from "react";
 export interface NavItem {
   label: string;
   href: string;
+  group?: string;
   /** Optional Heroicons-compatible SVG path `d` attribute, or full SVG string. */
   iconPath?: string;
 }
@@ -225,7 +226,7 @@ export default function TenantSidebar({
             marginBottom: "0.25rem",
           }}
         >
-          Workspace
+          Hospital
         </div>
         <div
           style={{
@@ -254,15 +255,22 @@ export default function TenantSidebar({
           gap: "0.125rem",
         }}
       >
-        {navItems.map((item) => (
-          <NavLink key={item.href} item={item} />
+        {navItems.map((item, index) => (
+          <div key={item.href}>
+            {item.group && (index === 0 || navItems[index - 1]?.group !== item.group) && (
+              <div style={{ padding: index === 0 ? "0.25rem 1.25rem 0.4rem" : "1rem 1.25rem 0.4rem", color: "var(--sidebar-muted)", fontSize: "0.625rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                {item.group}
+              </div>
+            )}
+            <NavLink item={item} />
+          </div>
         ))}
       </nav>
 
       {/* Footer: user info + logout */}
       <LogoutButton userEmail={userEmail} />
     </aside>
-    <nav className="mobile-sidebar-nav" aria-label="Workspace navigation">
+    <nav className="mobile-sidebar-nav" aria-label="Hospital navigation">
       {navItems.map((item) => {
         const active = pathname === item.href || pathname.startsWith(item.href + "/");
         const shortLabel = item.label === "Dashboard" ? "Home" : item.label === "Entities" ? "Records" : item.label === "Users" ? "People" : item.label;

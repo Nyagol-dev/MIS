@@ -54,7 +54,7 @@ export interface SessionGuardProps<K extends SessionKind> {
     session: K extends "tenant"
       ? SessionPayload & { sessionKind: "tenant" }
       : PlatformAdminSessionPayload
-  ) => React.ReactNode;
+  ) => React.ReactNode | Promise<React.ReactNode>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────

@@ -3,34 +3,34 @@ import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 
 export const metadata = {
-  title: "Features — Nexus MIS",
-  description: "The core tools that make up a Nexus MIS organisation workspace.",
+  title: "Hospital services",
+  description: "Patient care and operational modules in the hospital management information system.",
 };
 
 const features = [
   {
     number: "01",
-    title: "A workspace shaped around your organisation",
-    description: "Create record types that reflect the work you actually do. Add the fields, relationships and choices your team needs, then manage those records in one consistent place.",
-    detail: "Entity types · Custom fields · Record management",
+    title: "Patient registration and outpatient care",
+    description: "Maintain the patient registry, open encounters, capture triage observations, document care, and place clinical orders.",
+    detail: "Patient registry · OPD · Triage · Clinical notes · Orders",
   },
   {
     number: "02",
-    title: "People and permissions with clear boundaries",
-    description: "Bring staff into the workspace and organise access by role. Permissions can be managed across the system and for individual record types.",
-    detail: "User management · Roles · Entity permissions",
+    title: "Diagnostics and treatment services",
+    description: "Move work through laboratory, radiology, pharmacy, inpatient wards, and theatre with dedicated clinical worklists.",
+    detail: "Laboratory · Radiology · Pharmacy · Inpatient · Theatre",
   },
   {
     number: "03",
-    title: "A separate place for platform operations",
-    description: "Platform administrators manage organisations and platform accounts through a dedicated area, separate from day-to-day tenant workspaces.",
-    detail: "Organisation setup · Platform administrators · Audit trail",
+    title: "Health records and continuity",
+    description: "Support clinical coding, chart amendments, release-of-information requests, and registry integration workflows.",
+    detail: "Health records · ICD-11 coding · Amendments · HIE",
   },
   {
     number: "04",
-    title: "Reporting and billing tools when you need them",
-    description: "Use reporting tools to explore operational data. The platform also includes subscription billing flows with Stripe and M-Pesa integrations.",
-    detail: "Reports · Subscriptions · Stripe and M-Pesa",
+    title: "Billing, payments, and claims",
+    description: "Manage patient invoices and payments, M-Pesa collections, waivers, insurance eligibility, and SHA claim workflows.",
+    detail: "Patient billing · M-Pesa · Insurance · SHA claims",
   },
 ];
 
@@ -40,9 +40,9 @@ export default function FeaturesPage() {
       <SiteHeader current="features" />
       <main className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-brand-800">The toolkit</p>
-          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">The right structure for the work you already do.</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">Nexus brings together a small set of practical tools. Start with your records and people, then add the controls and reporting your organisation needs.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.13em] text-brand-800">Hospital services</p>
+          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-5xl">Support the patient journey across departments.</h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">Clinical and operational teams use dedicated work areas with role based access and an auditable record of activity.</p>
         </div>
 
         <div className="mt-14 border-t border-slate-200">
@@ -59,7 +59,7 @@ export default function FeaturesPage() {
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-l-2 border-brand-800 pl-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-xl text-sm leading-6 text-slate-600">See how the platform area and organisation workspace fit together.</p>
+          <p className="max-w-xl text-sm leading-6 text-slate-600">Hospital access is configured for one facility and its authorised staff.</p>
           <Link href="/how-it-works" className="text-sm font-semibold text-brand-800 hover:text-brand-600">How it works <span aria-hidden="true">→</span></Link>
         </div>
       </main>
